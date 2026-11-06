@@ -1,0 +1,146 @@
+---
+import { LANGS, LANG_LABELS, type Lang } from "../../i18n/languages";
+import { localePath, pick } from "../../i18n/locale";
+import { projects, type Project } from "../../data/projects";
+import { posts, type Post } from "../../data/posts";
+import { adminCsrfToken } from "../../server/admin";
+import { contentRows, projectImages, siteIntro, slugPattern, type Localized } from "../../server/studio-content";
+
+interface Props { kind: "project" | "post" | "site"; lang: Lang; session: string }
+const { kind, lang, session } = Astro.props;
+const l = (en: string, tr: string, de: string) => pick(lang, en, tr, de);
+const db = Astro.locals.studioMessages;
+const rows = db ? await contentRows(db, kind).catch(() => null) : null;
+const query = Astro.url.searchParams;
+const root = kind === "project" ? "/studio/projects" : kind === "post" ? "/studio/content" : "/studio/settings";
+const items = kind === "project" ? projects : kind === "post" ? posts : [];
+const slugs = new Set([...items.map((item) => item.slug), ...(rows ?? []).map((item) => item.slug)]);
+const slug = kind === "site" ? "home" : query.get("edit") ?? "";
+const creating = kind !== "site" && query.has("new");
+const editing = kind === "site" || (slug.length <= 100 && slugPattern.test(slug) && slugs.has(slug));
+const original = items.find((item) => item.slug === slug);
+const row = rows?.find((item) => item.slug === slug);
+const value = row ? JSON.parse(row.draft) as Project | Post | Localized : original;
+const project = kind === "project" ? value as Project | undefined : undefined;
+const post = kind === "post" ? value as Post | undefined : undefined;
+const intro = kind === "site" ? (value as Localized | undefined) ?? siteIntro : undefined;
+const gallery = kind === "project" ? (original as Project | undefined)?.screens ?? [] : [];
+const preview = editing && query.get("preview") === "1" && value && kind !== "site";
+const imagePreview = (src: string) => src.startsWith("/media/studio/") ? src.replace("/media/studio/", "/api/admin/media/") : src;
+const result = query.get("result");
+const feedback = result === "saved" ? l("Changes saved.", "Değişiklikler kaydedildi.", "Änderungen gespeichert.")
+  : result === "conflict" ? l("This entry changed. Reload and try again.", "Bu kayıt değişti. Sayfayı yenileyip tekrar deneyin.", "Der Eintrag wurde geändert. Bitte neu laden.")
+  : result === "invalid" ? l("Check the fields in all three languages and the image format.", "Üç dildeki alanları ve görsel biçimini kontrol edin.", "Bitte die Felder in allen drei Sprachen und das Bildformat prüfen.")
+  : result === "error" ? l("Could not save changes.", "Değişiklikler kaydedilemedi.", "Änderungen konnten nicht gespeichert werden.") : "";
+const date = new Date().toISOString().slice(0, 10);
+const projectFields = [
+  ["category", l("Category", "Kategori", "Kategorie"), 100],
+  ["role", l("Role", "Rol", "Rolle"), 120],
+  ["tagline", l("Tagline", "Kısa başlık", "Kurzzeile"), 240],
+  ["summary", l("Summary", "Özet", "Zusammenfassung"), 500],
+  ["overview", l("Description", "Açıklama", "Beschreibung"), 4000],
+  ["imageAlt", l("Image description", "Görsel açıklaması", "Bildbeschreibung"), 300],
+] as const;
+---
+
+<section class="studio-card">
+  <header class="studio-section-head">
+    <div>
+      <h2>{kind === "project" ? l("Manage projects", "Projeleri yönet", "Projekte verwalten") : kind === "post" ? l("Manage posts", "Yazıları yönet", "Beiträge verwalten") : l("Homepage introduction", "Ana sayfa tanıtımı", "Startseitentext")}</h2>
+      <p class="studio-muted">{l("Published changes appear on the site. Drafts are private.", "Yayımlanan değişiklikler sitede görünür. Taslaklar özeldir.", "Veröffentlichte Änderungen erscheinen auf der Website. Entwürfe sind privat.")}</p>
+    </div>
+    {rows && kind !== "site" && !editing && !creating && <a class="studio-button" href={`${root}?new=1`}>{l("New entry", "Yeni kayıt", "Neuer Eintrag")}</a>}
+  </header>
+  {feedback && <p class:list={["studio-notice", result === "saved" ? "studio-notice--good" : "studio-notice--error"]} role={result === "saved" ? "status" : "alert"} tabindex="-1" data-operation-feedback>{feedback}</p>}
+  {!rows ? <p class="studio-empty">{db ? l("Storage could not be read.", "İçerik deposu okunamadı.", "Der Speicher konnte nicht gelesen werden.") : l("Connect Studio D1 to enable editing.", "Düzenlemeyi açmak için Studio D1 bağlantısını kurun.", "Verbinden Sie Studio D1, um Inhalte zu bearbeiten.")}</p>
+    : <>
+      {kind !== "site" && !editing && !creating && <div class="studio-table-wrap">
+        <table class="studio-table">
+          <thead><tr><th scope="col">{l("Entry", "Kayıt", "Eintrag")}</th><th scope="col">{l("Status", "Durum", "Status")}</th><th scope="col">{l("Actions", "İşlemler", "Aktionen")}</th></tr></thead>
+          <tbody>{[...slugs].map((id) => {
+            const saved = rows.find((item) => item.slug === id);
+            const base = items.find((item) => item.slug === id);
+            const entry = saved ? JSON.parse(saved.draft) as Project | Post : base;
+            const title = typeof entry?.title === "string" ? entry.title : entry?.title[lang] ?? id;
+            const isPublished = !saved?.hidden && Boolean(saved?.published || base);
+            const status = saved?.hidden ? l("Unpublished", "Yayında değil", "Nicht veröffentlicht")
+              : isPublished ? l("Published", "Yayında", "Veröffentlicht") : l("Draft", "Taslak", "Entwurf");
+            const hasDraft = saved && isPublished && saved.draft !== saved.published;
+            return <tr>
+              <th scope="row">
+                {title}
+                {entry && "date" in entry && <time class="studio-table-meta" datetime={entry.date}>{entry.date}</time>}
+                {entry && "year" in entry && <span class="studio-table-meta">{[entry.year, ...entry.tags].join(" · ")}</span>}
+                {isPublished && <span class="studio-table-meta studio-table-locales">{LANGS.map((locale) => <a lang={locale} aria-label={`${title} · ${LANG_LABELS[locale]}`}
+                  href={localePath(locale, `/${kind === "project" ? "projects" : "blog"}/${id}/`)}>{locale.toUpperCase()}</a>)}</span>}
+              </th>
+              <td>{status}{hasDraft && <span class="studio-table-meta">{l("Has unpublished edits", "Yayımlanmamış değişiklikler var", "Mit unveröffentlichten Änderungen")}</span>}</td>
+              <td><a href={`${root}?edit=${id}`} aria-label={`${l("Edit", "Düzenle", "Bearbeiten")}: ${title}`}>{l("Edit", "Düzenle", "Bearbeiten")}</a></td>
+            </tr>;
+          })}</tbody>
+        </table>
+      </div>}
+      {(editing || creating) && (preview ? <article class="studio-content-preview">
+        <p class="studio-kicker">{l("Private preview", "Özel önizleme", "Private Vorschau")}</p>
+        <h3>{project?.title ?? post?.title[lang]}</h3>
+        {project?.image && <img src={imagePreview(project.image)} alt={project.imageAlt[lang]} />}
+        {project && <><p>{project.tagline[lang]}</p><p>{project.overview[lang]}</p></>}
+        {post && <><p>{post.excerpt[lang]}</p>{post.body.filter((part) => part[lang]).map((part) => <p>{part[lang]}</p>)}</>}
+        <a href={`${root}?edit=${slug}`}>{l("Back to editing", "Düzenlemeye dön", "Zur Bearbeitung")}</a>
+      </article> : <form class="studio-editor-form studio-content-form" method="post" action="/api/admin/content" enctype="multipart/form-data">
+        <input type="hidden" name="csrf" value={adminCsrfToken(session, "content")} />
+        <input type="hidden" name="kind" value={kind} />
+        <input type="hidden" name="revision" value={row?.revision ?? ""} />
+        {creating ? <>
+          <input type="hidden" name="new" value="1" />
+          <label>{l("URL slug", "URL kısa adı", "URL-Pfad")}<input name="slug" required maxlength="100" pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="my-entry" /></label>
+        </> : <input type="hidden" name="slug" value={slug} />}
+        {kind === "project" && <>
+          <div class="studio-form-grid">
+            <label>{l("Project name", "Proje adı", "Projektname")}<input name="name" value={project?.title} required maxlength="100" /></label>
+            <label>{l("Year", "Yıl", "Jahr")}<input name="year" inputmode="numeric" value={project?.year ?? date.slice(0, 4)} required pattern="[0-9]{4}" maxlength="4" /></label>
+            <label>{l("Live URL", "Canlı adres", "Live-URL")}<input name="live" type="url" value={project?.live} maxlength="500" /></label>
+            <label>{l("Cover image", "Kapak görseli", "Titelbild")}<select name="image">
+              <option value="">{l("No cover", "Kapak yok", "Kein Titelbild")}</option>
+              {project?.image?.startsWith("/media/studio/") && <option selected value={project.image}>{l("Current upload", "Mevcut yükleme", "Aktueller Upload")}</option>}
+              {projectImages.map((image) => <option value={image} selected={image === project?.image}>{image.split("/").at(-1)}</option>)}
+            </select></label>
+            <label>{l("Upload a cover (PNG, JPEG, WebP, max 512 KB)", "Kapak yükle (PNG, JPEG, WebP, en fazla 512 KB)", "Titelbild hochladen (PNG, JPEG, WebP, max. 512 KB)")}<input name="cover" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+          </div>
+          {project?.image && <img class="studio-cover-thumb" src={imagePreview(project.image)} alt={project.imageAlt[lang]} />}
+          {gallery.length > 0 && <fieldset><legend>{l("Existing gallery images", "Mevcut galeri görselleri", "Vorhandene Galeriebilder")}</legend>
+            {gallery.map((image) => <label class="studio-checkbox"><input type="checkbox" name="screen" value={image.src} checked={project?.screens?.some((item) => item.src === image.src)} />{image.caption[lang]}</label>)}
+          </fieldset>}
+        </>}
+        {kind === "post" && <label>{l("Publication date", "Yayın tarihi", "Veröffentlichungsdatum")}<input type="date" name="date" value={post?.date ?? date} required /></label>}
+        {kind !== "site" && <label>{l("Tags, separated by commas", "Etiketler, virgülle ayırın", "Schlagwörter, durch Kommas getrennt")}<input name="tags" value={(project?.tags ?? post?.tags)?.join(", ")} maxlength="300" /></label>}
+        <nav class="studio-editor-jumps" aria-label={l("Jump to form section", "Form bölümüne git", "Zum Formularabschnitt springen")}>
+          {LANGS.map((locale) => <a href={`#studio-fields-${locale}`} lang={locale}>{LANG_LABELS[locale]}</a>)}
+          <a href="#studio-save-actions">{l("Save options", "Kaydetme seçenekleri", "Speicheroptionen")}</a>
+        </nav>
+        {LANGS.map((locale) => <fieldset class="studio-locale-fields" id={`studio-fields-${locale}`} tabindex="-1">
+          <legend lang={locale}>{LANG_LABELS[locale]}</legend>
+          {kind === "project" && projectFields.map(([key, label, max]) => <label>{label}<textarea name={`${key}.${locale}`} lang={locale} rows={max > 500 ? 4 : 2} maxlength={max} required={key !== "imageAlt"}>{key === "summary" ? (project?.short ?? project?.summary)?.[locale] : project?.[key]?.[locale]}</textarea></label>)}
+          {kind === "post" && <>
+            <label>{l("Title", "Başlık", "Titel")}<input name={`title.${locale}`} value={post?.title[locale]} lang={locale} maxlength="140" required /></label>
+            <label>{l("Excerpt", "Özet", "Kurztext")}<textarea name={`excerpt.${locale}`} lang={locale} maxlength="500" required>{post?.excerpt[locale]}</textarea></label>
+            <label>{l("Body (separate paragraphs with a blank line)", "Yazı (paragrafları boş satırla ayırın)", "Text (Absätze durch Leerzeilen trennen)")}<textarea name={`body.${locale}`} lang={locale} rows="10" maxlength="30000" required>{post?.body.map((part) => part[locale]).filter(Boolean).join("\n\n")}</textarea></label>
+          </>}
+          {kind === "site" && <label>{l("Introduction", "Tanıtım", "Einführung")}<input name={`intro.${locale}`} value={intro?.[locale]} lang={locale} maxlength="160" required /></label>}
+        </fieldset>)}
+        <div class="studio-editor-actions" id="studio-save-actions" tabindex="-1">
+          {kind !== "site" && <button class="studio-button" name="action" value="save">{l("Save draft", "Taslağı kaydet", "Entwurf speichern")}</button>}
+          <button class="studio-button studio-button--primary" name="action" value="publish">{l("Publish", "Yayımla", "Veröffentlichen")}</button>
+          {editing && kind !== "site" && <>
+            <a class="studio-button" href={`${root}?edit=${slug}&preview=1`}>{l("Preview saved version", "Kayıtlı sürümü önizle", "Gespeicherte Version ansehen")}</a>
+            {!row?.hidden && (row?.published || original) && <details class="studio-editor studio-editor--danger">
+              <summary>{l("Unpublish", "Yayından kaldır", "Veröffentlichung aufheben")}</summary>
+              <p>{l("The public page is removed. The draft is retained.", "Sayfa yayından kalkar. Taslak saklanır.", "Die öffentliche Seite wird entfernt. Der Entwurf bleibt erhalten.")}</p>
+              <button class="studio-button studio-button--danger" name="action" value="archive" formnovalidate>{l("Confirm unpublishing", "Yayından kaldırmayı onayla", "Aufhebung bestätigen")}</button>
+            </details>}
+          </>}
+        </div>
+        {kind !== "site" && <a href={root}>{l("Back to list", "Listeye dön", "Zur Liste")}</a>}
+      </form>)}
+    </>}
+</section>

@@ -4,6 +4,14 @@
   "main": "./src/worker.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "STUDIO_MESSAGES",
+      "database_name": "pekmen-studio",
+      "database_id": "8e0c21c1-daa5-45da-9dc8-455597803c80",
+      "migrations_dir": "migrations/studio"
+    }
+  ],
   "durable_objects": {
     "bindings": [
       { "name": "BOOKING_COORDINATOR", "class_name": "BookingCoordinator" }
@@ -12,6 +20,10 @@
   "migrations": [
     { "tag": "booking-coordinator-v1", "new_sqlite_classes": ["BookingCoordinator"] }
   ],
+  "vars": {
+    "STUDIO_ANALYTICS_ACCOUNT": "ca825f772a4be9170275962cd736ddef",
+    "STUDIO_ANALYTICS_SITE": "d54feb49433d40f48e9c2140275edd1c"
+  },
   "observability": {
     "enabled": true
   }

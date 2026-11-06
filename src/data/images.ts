@@ -5,7 +5,8 @@
  */
 const responsiveWidths = [480, 800, 960] as const;
 
-export function imageSrcSet(src: string): string {
+export function imageSrcSet(src: string): string | undefined {
+  if (!["/projects/barber.webp", "/projects/boyaci.webp", "/projects/pekmen-net.webp"].includes(src)) return undefined;
   const base = src.replace(/\.webp$/, "");
   const variants = responsiveWidths.map(
     (width) => `${base}-${width}.webp ${width}w`

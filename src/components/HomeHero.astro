@@ -4,11 +4,13 @@ import IconArrow from "./IconArrow.astro";
 import HeroIntro from "./HeroIntro.astro";
 import SignatureMark from "./SignatureMark.astro";
 import { site } from "../data/site";
-import { projects } from "../data/projects";
+import type { Project } from "../data/projects";
 import { langOf, localePath } from "../i18n/locale";
 
+interface Props { projects: Project[] }
+const { projects } = Astro.props;
 const lang = langOf(Astro);
-const latest = projects.find((project) => project.slug === "boyaci") ?? projects[0];
+const latest = projects[0];
 ---
 
 <section class="hero">
@@ -18,7 +20,7 @@ const latest = projects.find((project) => project.slug === "boyaci") ?? projects
     <aside class="hero__panel">
       <SignatureMark />
 
-      <div class="hero__panel-work">
+      {latest && <div class="hero__panel-work">
         <span class="hero__panel-label">
           <L10n en="Latest work" tr="Son iş" de="Letzte Arbeit" />
         </span>
@@ -32,7 +34,7 @@ const latest = projects.find((project) => project.slug === "boyaci") ?? projects
         <p class="hero__panel-summary">
           <L10n en={latest.summary.en} tr={latest.summary.tr} de={latest.summary.de} />
         </p>
-      </div>
+      </div>}
 
       <div class="hero__panel-foot">
         <span class="hero__panel-where">

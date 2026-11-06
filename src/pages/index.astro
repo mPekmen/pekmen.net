@@ -4,11 +4,13 @@ import L10n from "../components/L10n.astro";
 import IconArrow from "../components/IconArrow.astro";
 import WorkCard from "../components/WorkCard.astro";
 import HomeHero from "../components/HomeHero.astro";
-import { projects } from "../data/projects";
-import { formatPostDate, posts } from "../data/posts";
+import { formatPostDate } from "../data/posts";
+import { publicProjects, publicPosts } from "../server/studio-content";
 import { langOf, localePath } from "../i18n/locale";
 import "../styles/showcase.css";
 
+const projects = await publicProjects(Astro.locals.studioMessages);
+const posts = await publicPosts(Astro.locals.studioMessages);
 const lang = langOf(Astro);
 const selected = projects.slice(0, 4);
 const latestPosts = posts.slice(0, 3);
@@ -28,7 +30,7 @@ const dateProps = (iso: string) => ({
   descriptionTr="Pekmen (Mert Pekmen) hızlı ve sade web ürünleri kurar — arayüzden altındaki sunuculara ve ağlara kadar. Seçili işler, vaka analizleri ve randevu."
   descriptionDe="Pekmen (Mert Pekmen) baut schnelle, leise Webprodukte — vom Interface bis zu den Servern und Netzen darunter. Ausgewählte Arbeiten, Case Studies und Terminbuchung."
 >
-  <HomeHero />
+  <HomeHero {projects} />
 
   <section class="section section--cream" id="work">
     <div class="container">

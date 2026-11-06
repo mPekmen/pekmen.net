@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
-import { posts } from "../data/posts";
 import { site } from "../data/site";
+
+import { publicPosts } from "../server/studio-content";
 
 export const prerender = false;
 
@@ -12,7 +13,8 @@ const escape = (value: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
-export const GET: APIRoute = () => {
+export const GET: APIRoute = async ({ locals }) => {
+  const posts = await publicPosts(locals.studioMessages);
   const base = site.url.replace(/\/$/, "");
 
   const items = posts
@@ -50,7 +52,7 @@ ${items}
   return new Response(xml, {
     headers: {
       "Content-Type": "application/rss+xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
+      "Cache-Control": locals.studioMessages ? "no-store" : "public, max-age=3600",
     },
   });
 };

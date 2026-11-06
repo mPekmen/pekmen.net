@@ -8,7 +8,7 @@ import { dateKeyInZone } from "../../server/time";
 import type { BookingEvent } from "../../server/google";
 
 import StudioModules from "./StudioModules.astro";
-import { projects } from "../../data/projects";
+import { publicProjects } from "../../server/studio-content";
 import { inboxSummary } from "../../server/studio-messages";
 import { studioSections, studioPath, studioLocale, studioT, type StudioSection } from "../../server/studio";
 
@@ -48,6 +48,7 @@ for (const booking of bookings) {
 }
 const page = { title: studioSections[section][lang], path: studioPath(section) };
 const inbox = authed && section === "overview" ? await inboxSummary(Astro.locals.studioMessages) : null;
+const projects = authed && section === "overview" ? await publicProjects(Astro.locals.studioMessages).catch(() => null) : null;
 const calendarStatus = ready ? t("Takvim erişilebilir") : snapshot?.state === "unconfigured" ? t("Yapılandırılmamış") : t("Takvim okunamadı");
 const calendarMessage = snapshot?.state === "unconfigured"
   ? t("Google Takvim bağlantısı yapılandırılmamış.")
@@ -133,20 +134,20 @@ const mailText = mailResult === "0" ? t("E-posta gönderilemedi. Katılımcıya 
       {calendarPage && section !== "settings" && !ready && <p class="studio-notice studio-notice--error" role="status">{calendarMessage}</p>}
 
       {section === "overview" && <div class="studio-metrics">
-        <section class="studio-card studio-metric"><h2>{t("Yayındaki projeler")}</h2><strong>{projects.filter((item) => !item.archived).length}</strong><a href="/admin/projects">{studioSections.projects[lang]}</a></section>
-        <section class="studio-card studio-metric"><h2>{t("Sistem durumu")}</h2><strong class="studio-next">{calendarStatus}</strong><a href="/admin/settings">{studioSections.settings[lang]}</a></section>
-        {inbox !== null && <section class="studio-card studio-metric"><h2>{t("Okunmamış mesajlar")}</h2><strong>{inbox}</strong><a href="/admin/messages">{studioSections.messages[lang]}</a></section>}
+        {projects && <section class="studio-card studio-metric"><h2>{t("Yayındaki projeler")}</h2><strong>{projects.length}</strong><a href="/studio/projects">{studioSections.projects[lang]}</a></section>}
+        <section class="studio-card studio-metric"><h2>{t("Sistem durumu")}</h2><strong class="studio-next">{calendarStatus}</strong><a href="/studio/settings">{studioSections.settings[lang]}</a></section>
+        {inbox !== null && <section class="studio-card studio-metric"><h2>{t("Okunmamış mesajlar")}</h2><strong>{inbox}</strong><a href="/studio/messages">{studioSections.messages[lang]}</a></section>}
       </div>}
       {section === "overview" && ready && (
         <>
           <div class="studio-metrics">
             <section class="studio-card studio-metric studio-metric--attention">
               <h2>{t("Onay bekleyen")}</h2><strong>{pending.length}</strong>
-              <a href="/admin/appointments#pending">{t("Bekleyenleri aç")} <span aria-hidden="true">↗</span></a>
+              <a href="/studio/appointments#pending">{t("Bekleyenleri aç")} <span aria-hidden="true">↗</span></a>
             </section>
             <section class="studio-card studio-metric">
               <h2>{t("Onaylı randevular")}</h2><strong>{confirmed.length}</strong>
-              <a href="/admin/appointments">{t("Randevuları aç")} <span aria-hidden="true">↗</span></a>
+              <a href="/studio/appointments">{t("Randevuları aç")} <span aria-hidden="true">↗</span></a>
             </section>
             <section class="studio-card studio-metric">
               <h2>{t("Sıradaki görüşme")}</h2><strong class="studio-next">{next?.name ?? t("Onaylı görüşme yok")}</strong>
@@ -160,7 +161,7 @@ const mailText = mailResult === "0" ? t("E-posta gönderilemedi. Katılımcıya 
                 {pending.slice(0, 4).map((booking) => <AdminAppointment {booking} {session} {timeZone} {lang} leadHours={settings.leadHours} compact />)}
               </ul>
             ) : <p class="studio-empty">{t("Onay bekleyen talep yok.")}</p>}
-            {pending.length > 4 && <a class="studio-queue-footer" href="/admin/appointments#pending">{t("Tüm bekleyen talepler")}</a>}
+            {pending.length > 4 && <a class="studio-queue-footer" href="/studio/appointments#pending">{t("Tüm bekleyen talepler")}</a>}
           </section>
           <section class="studio-card studio-queue">
             <header class="studio-section-head"><div><h2>{t("Yaklaşan görüşmeler")}</h2><p class="studio-muted">{t("Onaylanmış randevular, tarih sırasıyla.")}</p></div></header>
@@ -181,10 +182,10 @@ const mailText = mailResult === "0" ? t("E-posta gönderilemedi. Katılımcıya 
             <label>{t("Arama")}<input type="search" data-search placeholder={t("İsim veya e-posta")} /></label>
             <label>{t("Durum")}<select data-status><option value="">{t("Tümü")}</option><option value="pending">{t("Onay bekliyor")}</option><option value="confirmed">{t("Onaylandı")}</option></select></label>
             <label>{t("Başlangıç")}<input type="date" data-from /></label>
-            <label>{t("Bitiş")}<input type="date" data-to /></label>
+            <label>{t("Bitiş")}<input type="date" data-to aria-describedby="studio-filter-results" /></label>
             <button type="button" class="studio-button" data-clear>{t("Temizle")}</button>
           </div>
-          <p class="studio-results" role="status" data-results>{bookings.length} {t("randevu")}</p>
+          <p class="studio-results" id="studio-filter-results" role="status" data-results>{bookings.length} {t("randevu")}</p>
           <p class="studio-empty" data-filter-empty hidden>{t("Bu filtrelerle eşleşen randevu yok.")}</p>
           {!bookings.length && <p class="studio-empty">{t("Yaklaşan randevu yok.")}</p>}
           {[...groups.values()].map((items) => (
@@ -357,13 +358,17 @@ const mailText = mailResult === "0" ? t("E-posta gönderilemedi. Katılımcıya 
       const filter = { search: search.value, status: bookingStatus.value, from: from.value, to: to.value };
       const invalid = Boolean(filter.from && filter.to && filter.to < filter.from);
       to.setAttribute("aria-invalid", String(invalid));
+      to.min = filter.from;
       let count = 0;
       for (const { group, rows } of groups) {
         for (const row of rows) row.row.hidden = invalid || !matchesAppointment(row, filter);
         group.hidden = rows.every(({ row }) => row.hidden);
         count += rows.filter(({ row }) => !row.hidden).length;
       }
-      if (results) results.textContent = invalid ? t("Bitiş tarihi başlangıçtan önce olamaz.") : `${count} ${t("randevu")}`;
+      if (results) {
+        results.textContent = invalid ? t("Bitiş tarihi başlangıçtan önce olamaz.") : `${count} ${t("randevu")}`;
+        results.classList.toggle("studio-field-error", invalid);
+      }
       if (empty) empty.hidden = invalid || count !== 0 || groups.length === 0;
     };
     if (window.location.hash === "#pending") bookingStatus.value = "pending";
@@ -384,13 +389,32 @@ const mailText = mailResult === "0" ? t("E-posta gönderilemedi. Katılımcıya 
   const refreshLink = document.querySelector<HTMLAnchorElement>("[data-refresh-link]");
   document.querySelector<HTMLElement>("[data-operation-feedback]")?.focus();
 
-  document.querySelectorAll<HTMLButtonElement>("[data-dismiss-cancel]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const details = button.closest("details");
-      if (!details) return;
-      details.open = false;
-      details.querySelector("summary")?.focus();
-    });
+  document.querySelectorAll<HTMLDetailsElement>("[data-cancel-editor]").forEach((details, index) => {
+    const trigger = details.querySelector("summary");
+    const form = details.querySelector("form");
+    const heading = form?.querySelector("h3");
+    const dismiss = form?.querySelector<HTMLButtonElement>("[data-dismiss-cancel]");
+    if (!trigger || !form || !heading || !dismiss) return;
+    const dialog = document.createElement("dialog");
+    if (typeof dialog.showModal !== "function") {
+      dismiss.addEventListener("click", () => { details.open = false; trigger.focus(); });
+      return;
+    }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "studio-button studio-button--danger";
+    button.textContent = trigger.textContent;
+    button.setAttribute("aria-haspopup", "dialog");
+    heading.id = `studio-cancel-${index}`;
+    dialog.className = "studio-dialog";
+    dialog.setAttribute("aria-labelledby", heading.id);
+    dialog.setAttribute("data-studio-dialog", "");
+    details.replaceWith(button);
+    dialog.append(form);
+    document.body.append(dialog);
+    button.addEventListener("click", () => { dialog.showModal(); dismiss.focus(); });
+    dismiss.addEventListener("click", () => dialog.close());
+    dialog.addEventListener("close", () => button.focus());
   });
 
   let submitting = false;
@@ -428,7 +452,7 @@ const mailText = mailResult === "0" ? t("E-posta gönderilemedi. Katılımcıya 
       timeZone: live.dataset.timeZone,
     });
     const canCheck = () => !submitting && document.visibilityState === "visible" &&
-      !document.querySelector("[data-booking-editor][open]") &&
+      !document.querySelector("[data-booking-editor][open], [data-studio-dialog][open]") &&
       !document.activeElement?.closest("form, [data-appointment-filters]") && Date.now() - lastActivity >= 5_000;
 
     for (const name of ["pointerdown", "keydown", "input", "change"]) {
@@ -454,7 +478,7 @@ const mailText = mailResult === "0" ? t("E-posta gönderilemedi. Katılımcıya 
           const url = manual ? "/api/admin/bookings?refresh=1" : "/api/admin/bookings";
           const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
           if (response.status === 401) {
-            window.location.assign("/admin?error=auth");
+            window.location.assign("/studio?error=auth");
             return true;
           }
           const data = await response.json();

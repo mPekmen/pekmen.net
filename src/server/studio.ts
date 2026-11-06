@@ -14,13 +14,13 @@ export const studioSections = {
 };
 
 export type StudioSection = keyof typeof studioSections;
-export const studioPath = (section: StudioSection) => section === "overview" ? "/admin" : `/admin/${section}`;
+export const studioPath = (section: StudioSection) => section === "overview" ? "/studio" : `/studio/${section}`;
 
 export function studioLocale({ url, cookies }: Pick<APIContext, "url" | "cookies">): Lang {
   const requested = url.searchParams.get("lang");
   if (requested && isLang(requested)) {
     cookies.set("studio_lang", requested, {
-      path: "/admin", sameSite: "lax", httpOnly: true, secure: url.protocol === "https:", maxAge: 31_536_000,
+      path: "/studio", sameSite: "lax", httpOnly: true, secure: url.protocol === "https:", maxAge: 31_536_000,
     });
     return requested;
   }

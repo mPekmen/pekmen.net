@@ -1,13 +1,15 @@
 import type { APIRoute } from "astro";
-import { projects } from "../data/projects";
-import { posts } from "../data/posts";
 import { site } from "../data/site";
 import { LANGS } from "../i18n/languages";
 import { localePath } from "../i18n/locale";
 
+import { publicProjects, publicPosts } from "../server/studio-content";
+
 export const prerender = false;
 
-export const GET: APIRoute = () => {
+export const GET: APIRoute = async ({ locals }) => {
+  const projects = await publicProjects(locals.studioMessages);
+  const posts = await publicPosts(locals.studioMessages);
   const base = site.url.replace(/\/$/, "");
   const paths = [
     "/",
@@ -43,7 +45,7 @@ export const GET: APIRoute = () => {
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
+      "Cache-Control": locals.studioMessages ? "no-store" : "public, max-age=3600",
     },
   });
 };

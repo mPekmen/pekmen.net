@@ -36,7 +36,7 @@ const sections = Object.entries(studioSections);
       <div class="studio-shell">
         <a class="studio-skip" href="#studio-main">{t("İçeriğe geç")}</a>
         <aside class="studio-sidebar">
-          <a href="/admin" class="studio-brand">
+          <a href="/studio" class="studio-brand">
             <span class="studio-mark" aria-hidden="true">P.</span>
             <span>Pekmen Studio<small>{t("Yönetim paneli")}</small></span>
           </a>
@@ -64,5 +64,6 @@ const sections = Object.entries(studioSections);
         <slot />
       </main>
     )}
+    <script>import "../scripts/studio-calendar";</script>
   </body>
 </html>

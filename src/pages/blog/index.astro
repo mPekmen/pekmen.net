@@ -1,10 +1,12 @@
 ---
+import { publicPosts } from "../../server/studio-content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import L10n from "../../components/L10n.astro";
 import IconArrow from "../../components/IconArrow.astro";
-import { formatPostDate, posts } from "../../data/posts";
+import { formatPostDate } from "../../data/posts";
 import { langOf, localePath } from "../../i18n/locale";
 
+const posts = await publicPosts(Astro.locals.studioMessages);
 const lang = langOf(Astro);
 const count = String(posts.length).padStart(2, "0");
 

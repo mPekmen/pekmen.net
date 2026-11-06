@@ -3,6 +3,9 @@ import L10n from "./L10n.astro";
 import IconArrow from "./IconArrow.astro";
 import { langOf, localePath } from "../i18n/locale";
 
+import { publicIntro } from "../server/studio-content";
+
+const intro = await publicIntro(Astro.locals.studioMessages);
 const lang = langOf(Astro);
 ---
 
@@ -13,11 +16,7 @@ const lang = langOf(Astro);
     </h1>
 
     <p class="hero__sub">
-      <L10n
-        en="I build digital products."
-        tr="Dijital ürünler geliştiriyorum."
-        de="Ich baue digitale Produkte."
-      />
+      <L10n {...intro} />
     </p>
   </div>
 

@@ -89,9 +89,10 @@ const meetLink = !pending && link(booking.meetLink, "meet.google.com");
             </div>
           </form>
         </details>
-        <details class="studio-editor studio-editor--danger" data-booking-editor>
+        <details class="studio-editor studio-editor--danger" data-booking-editor data-cancel-editor>
           <summary>{t("İptal et")}</summary>
           <form class="studio-editor-form" method="post" action="/api/admin/cancel">
+            <h3>{t("İptali onayla")}</h3>
             <input type="hidden" name="csrf" value={csrf("cancel")} />
             <input type="hidden" name="id" value={booking.id} />
             <input type="hidden" name="returnTo" value="appointments" />

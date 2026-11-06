@@ -10,7 +10,7 @@ if (!requested || requested === "overview" || (requested !== "system" && !Object
   return new Response("Not found", { status: 404 });
 }
 if (!verifySessionToken(Astro.cookies.get(ADMIN_COOKIE)?.value)) {
-  return Astro.redirect("/admin", 303);
+  return Astro.redirect("/studio", 303);
 }
 const section = (requested === "system" ? "settings" : requested) as StudioSection;
 ---

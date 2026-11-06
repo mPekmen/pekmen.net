@@ -25,14 +25,14 @@ export const POST: APIRoute = async (context) => {
   }
 
   if (!isAdminConfigured()) {
-    return redirect("/admin?error=config", 303);
+    return redirect("/studio?error=config", 303);
   }
 
   const ip = clientIp(request, clientAddress || "unknown");
   const key = `admin-login:${ip}`;
 
   if (isRateLimited(key, 10, 5 * 60_000)) {
-    return redirect("/admin?error=rate", 303);
+    return redirect("/studio?error=rate", 303);
   }
 
   const form = await readAdminPost(context, "login");
@@ -41,7 +41,7 @@ export const POST: APIRoute = async (context) => {
 
   if (!checkPassword(password)) {
     rateLimit(key, 10, 5 * 60_000);
-    return redirect("/admin?error=password", 303);
+    return redirect("/studio?error=password", 303);
   }
 
   clearRateLimit(key);
@@ -49,5 +49,5 @@ export const POST: APIRoute = async (context) => {
 
   cookies.set(ADMIN_COOKIE, createSessionToken(), sessionCookieOptions(url));
 
-  return redirect("/admin", 303);
+  return redirect("/studio", 303);
 };
