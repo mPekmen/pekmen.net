@@ -51,7 +51,7 @@ const projectFields = [
     </div>
     {rows && kind !== "site" && !editing && !creating && <a class="studio-button" href={`${root}?new=1`}>{l("New entry", "Yeni kayıt", "Neuer Eintrag")}</a>}
   </header>
-  {feedback && <p class:list={["studio-notice", result === "saved" ? "studio-notice--good" : "studio-notice--error"]} role={result === "saved" ? "status" : "alert"}>{feedback}</p>}
+  {feedback && <p class:list={["studio-notice", result === "saved" ? "studio-notice--good" : "studio-notice--error"]} role={result === "saved" ? "status" : "alert"} tabindex="-1" data-operation-feedback>{feedback}</p>}
   {!rows ? <p class="studio-empty">{db ? l("Storage could not be read.", "İçerik deposu okunamadı.", "Der Speicher konnte nicht gelesen werden.") : l("Connect Studio D1 to enable editing.", "Düzenlemeyi açmak için Studio D1 bağlantısını kurun.", "Verbinden Sie Studio D1, um Inhalte zu bearbeiten.")}</p>
     : <>
       {kind !== "site" && !editing && !creating && <div class="studio-table-wrap">
@@ -114,7 +114,11 @@ const projectFields = [
         </>}
         {kind === "post" && <label>{l("Publication date", "Yayın tarihi", "Veröffentlichungsdatum")}<input type="date" name="date" value={post?.date ?? date} required /></label>}
         {kind !== "site" && <label>{l("Tags, separated by commas", "Etiketler, virgülle ayırın", "Schlagwörter, durch Kommas getrennt")}<input name="tags" value={(project?.tags ?? post?.tags)?.join(", ")} maxlength="300" /></label>}
-        {LANGS.map((locale) => <fieldset class="studio-locale-fields" lang={lang}>
+        <nav class="studio-editor-jumps" aria-label={l("Jump to form section", "Form bölümüne git", "Zum Formularabschnitt springen")}>
+          {LANGS.map((locale) => <a href={`#studio-fields-${locale}`} lang={locale}>{LANG_LABELS[locale]}</a>)}
+          <a href="#studio-save-actions">{l("Save options", "Kaydetme seçenekleri", "Speicheroptionen")}</a>
+        </nav>
+        {LANGS.map((locale) => <fieldset class="studio-locale-fields" id={`studio-fields-${locale}`} tabindex="-1">
           <legend lang={locale}>{LANG_LABELS[locale]}</legend>
           {kind === "project" && projectFields.map(([key, label, max]) => <label>{label}<textarea name={`${key}.${locale}`} lang={locale} rows={max > 500 ? 4 : 2} maxlength={max} required={key !== "imageAlt"}>{key === "summary" ? (project?.short ?? project?.summary)?.[locale] : project?.[key]?.[locale]}</textarea></label>)}
           {kind === "post" && <>
@@ -124,7 +128,7 @@ const projectFields = [
           </>}
           {kind === "site" && <label>{l("Introduction", "Tanıtım", "Einführung")}<input name={`intro.${locale}`} value={intro?.[locale]} lang={locale} maxlength="160" required /></label>}
         </fieldset>)}
-        <div class="studio-editor-actions">
+        <div class="studio-editor-actions" id="studio-save-actions" tabindex="-1">
           {kind !== "site" && <button class="studio-button" name="action" value="save">{l("Save draft", "Taslağı kaydet", "Entwurf speichern")}</button>}
           <button class="studio-button studio-button--primary" name="action" value="publish">{l("Publish", "Yayımla", "Veröffentlichen")}</button>
           {editing && kind !== "site" && <>

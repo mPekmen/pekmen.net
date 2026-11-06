@@ -182,10 +182,10 @@ const mailText = mailResult === "0" ? t("E-posta gönderilemedi. Katılımcıya 
             <label>{t("Arama")}<input type="search" data-search placeholder={t("İsim veya e-posta")} /></label>
             <label>{t("Durum")}<select data-status><option value="">{t("Tümü")}</option><option value="pending">{t("Onay bekliyor")}</option><option value="confirmed">{t("Onaylandı")}</option></select></label>
             <label>{t("Başlangıç")}<input type="date" data-from /></label>
-            <label>{t("Bitiş")}<input type="date" data-to /></label>
+            <label>{t("Bitiş")}<input type="date" data-to aria-describedby="studio-filter-results" /></label>
             <button type="button" class="studio-button" data-clear>{t("Temizle")}</button>
           </div>
-          <p class="studio-results" role="status" data-results>{bookings.length} {t("randevu")}</p>
+          <p class="studio-results" id="studio-filter-results" role="status" data-results>{bookings.length} {t("randevu")}</p>
           <p class="studio-empty" data-filter-empty hidden>{t("Bu filtrelerle eşleşen randevu yok.")}</p>
           {!bookings.length && <p class="studio-empty">{t("Yaklaşan randevu yok.")}</p>}
           {[...groups.values()].map((items) => (
@@ -358,13 +358,17 @@ const mailText = mailResult === "0" ? t("E-posta gönderilemedi. Katılımcıya 
       const filter = { search: search.value, status: bookingStatus.value, from: from.value, to: to.value };
       const invalid = Boolean(filter.from && filter.to && filter.to < filter.from);
       to.setAttribute("aria-invalid", String(invalid));
+      to.min = filter.from;
       let count = 0;
       for (const { group, rows } of groups) {
         for (const row of rows) row.row.hidden = invalid || !matchesAppointment(row, filter);
         group.hidden = rows.every(({ row }) => row.hidden);
         count += rows.filter(({ row }) => !row.hidden).length;
       }
-      if (results) results.textContent = invalid ? t("Bitiş tarihi başlangıçtan önce olamaz.") : `${count} ${t("randevu")}`;
+      if (results) {
+        results.textContent = invalid ? t("Bitiş tarihi başlangıçtan önce olamaz.") : `${count} ${t("randevu")}`;
+        results.classList.toggle("studio-field-error", invalid);
+      }
       if (empty) empty.hidden = invalid || count !== 0 || groups.length === 0;
     };
     if (window.location.hash === "#pending") bookingStatus.value = "pending";
