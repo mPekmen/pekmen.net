@@ -2,11 +2,6 @@ export type Lang = "en" | "tr" | "de";
 
 export type Localized = Record<Lang, string>;
 
-export type ProjectMetric = {
-  value: string;
-  label: Localized;
-};
-
 export type ProjectSection = {
   title: Localized;
   body: Localized;
@@ -27,7 +22,6 @@ export type Project = {
   title: string;
   category: Localized;
   year: string;
-  tone: "green" | "deep" | "cream" | "light";
   role: Localized;
   summary: Localized;
   short?: Localized;
@@ -45,7 +39,6 @@ export type Project = {
   playStore?: string;
   repo?: string;
   sections: ProjectSection[];
-  metrics: ProjectMetric[];
 };
 
 const projectList: Project[] = [
@@ -55,7 +48,6 @@ const projectList: Project[] = [
     title: "BarBer",
     category: { en: "Booking platform", tr: "Randevu platformu", de: "Buchungsplattform" },
     year: "2025",
-    tone: "green",
     role: {
       en: "Product design & full-stack development",
       tr: "Ürün tasarımı & full-stack geliştirme",
@@ -157,32 +149,6 @@ const projectList: Project[] = [
         },
       },
     ],
-    metrics: [
-      {
-        value: "250",
-        label: {
-          en: "salons with online booking",
-          tr: "online randevulu salon",
-          de: "Salons mit Online-Buchung",
-        },
-      },
-      {
-        value: "9,000+",
-        label: {
-          en: "salons on the map",
-          tr: "haritadaki salon",
-          de: "Salons auf der Karte",
-        },
-      },
-      {
-        value: "4.4/5",
-        label: {
-          en: "from 291 reviews",
-          tr: "291 değerlendirme",
-          de: "aus 291 Bewertungen",
-        },
-      },
-    ],
   },
   {
     slug: "boyaci",
@@ -190,7 +156,6 @@ const projectList: Project[] = [
     title: "boyacı.net",
     category: { en: "Local business site", tr: "Yerel işletme sitesi", de: "Website für einen lokalen Betrieb" },
     year: "2026",
-    tone: "cream",
     role: {
       en: "Design & development",
       tr: "Tasarım & geliştirme",
@@ -263,32 +228,6 @@ const projectList: Project[] = [
         },
       },
     ],
-    metrics: [
-      {
-        value: "100",
-        label: {
-          en: "performance (mobile)",
-          tr: "performans (mobil)",
-          de: "Performance (mobil)",
-        },
-      },
-      {
-        value: "100",
-        label: {
-          en: "accessibility",
-          tr: "erişilebilirlik",
-          de: "Barrierefreiheit",
-        },
-      },
-      {
-        value: "100",
-        label: {
-          en: "SEO",
-          tr: "SEO",
-          de: "SEO",
-        },
-      },
-    ],
   },
   {
     slug: "pekmen-net",
@@ -296,7 +235,6 @@ const projectList: Project[] = [
     title: "pekmen.net",
     category: { en: "Personal portfolio", tr: "Kişisel portfolyo", de: "Persönliches Portfolio" },
     year: "2021",
-    tone: "light",
     role: {
       en: "Design & development",
       tr: "Tasarım & geliştirme",
@@ -367,28 +305,6 @@ const projectList: Project[] = [
           en: "Astro renders the public pages on the server. JavaScript supports interactive parts like the mobile menu and the appointment form.",
           tr: "Astro, ziyaretçiye açık sayfaları sunucuda hazırlıyor. JavaScript mobil menü ve randevu formu gibi etkileşimli bölümlerde kullanılıyor.",
           de: "Astro rendert die öffentlichen Seiten auf dem Server. JavaScript unterstützt interaktive Bereiche wie das mobile Menü und das Terminformular.",
-        },
-      },
-    ],
-    metrics: [
-      {
-        value: "3",
-        label: { en: "languages", tr: "dil", de: "Sprachen" },
-      },
-      {
-        value: "0",
-        label: {
-          en: "UI frameworks",
-          tr: "UI framework",
-          de: "UI-Frameworks",
-        },
-      },
-      {
-        value: "1",
-        label: {
-          en: "font family",
-          tr: "yazı tipi ailesi",
-          de: "Schriftfamilie",
         },
       },
     ],

@@ -43,8 +43,6 @@ export default defineConfig({
     port: 3000,
   },
   markdown: {
-    shikiConfig: {
-      theme: "github-light",
-    },
+    syntaxHighlight: false,
   },
 });

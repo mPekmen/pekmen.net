@@ -460,7 +460,11 @@ test("booking holds the slot without inviting the guest and attempts both emails
     assert.equal(init.method, "POST");
     assert.equal(url.searchParams.get("sendUpdates"), "none");
     calendarEvent = JSON.parse(init.body);
-    return Response.json({ id: calendarEvent.id });
+    return Response.json({
+      id: calendarEvent.id,
+      htmlLink: "https://calendar.google.com/calendar/event?eid=private",
+      hangoutLink: "https://meet.google.com/abc-defg-hij",
+    });
   });
 
   const start = "2030-01-07T10:00:00+03:00";
@@ -468,7 +472,10 @@ test("booking holds the slot without inviting the guest and attempts both emails
     action: "book", name: "Visitor", email: "visitor@example.test", start, lang: "tr",
   }), "application/json", locals));
   assert.equal(response.status, 200);
-  assert.equal((await response.json()).event.status, "pending");
+  assert.deepEqual(await response.json(), {
+    ok: true,
+    event: { start, end: "2030-01-07T10:30:00+03:00", status: "pending" },
+  });
   assert.equal(calendarEvent.start.dateTime, start);
   assert.equal(calendarEvent.end.dateTime, "2030-01-07T10:30:00+03:00");
   assert.equal(calendarEvent.attendees, undefined);

@@ -17,7 +17,7 @@ export const GET: APIRoute = () => {
 
   const items = posts
     .map((post) => {
-      const url = `${base}/blog/${post.slug}/`;
+      const url = `${base}/tr/blog/${post.slug}/`;
       const date = new Date(`${post.date}T09:00:00+03:00`).toUTCString();
 
       return [
@@ -37,7 +37,7 @@ export const GET: APIRoute = () => {
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Pekmen — Yazılar</title>
-    <link>${base}/blog/</link>
+    <link>${base}/tr/blog/</link>
     <description>Hızlı, sade ürünler ve arkalarındaki sistemler üzerine notlar.</description>
     <language>tr</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>

@@ -15,7 +15,7 @@ export const GET: APIRoute = ({ url }) => {
     return new Response("Not found", { status: 404 });
   }
 
-  const kind = url.searchParams.get("kind") ?? "contact";
+  const kind = url.searchParams.get("kind") === "booking" ? "booking" : "contact";
 
   const body =
     kind === "booking"

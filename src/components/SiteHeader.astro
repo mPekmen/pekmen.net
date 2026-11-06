@@ -3,7 +3,7 @@ import L10n from "./L10n.astro";
 import LangSwitch from "./LangSwitch.astro";
 import IconArrow from "./IconArrow.astro";
 import { site } from "../data/site";
-import { langOf, localePath, pathOf } from "../i18n/locale";
+import { langOf, localePath, pathOf, pick } from "../i18n/locale";
 
 const lang = langOf(Astro);
 const path = pathOf(Astro).replace(/\/+$/, "") || "/";
@@ -16,11 +16,11 @@ const bookingActive = path === "/appointment";
 
 <header class="site-header" data-header>
   <div class="container site-header__inner">
-    <a class="brand" href={localePath(lang, "/")} aria-label={`${site.name} — home`}>
+    <a class="brand" href={localePath(lang, "/")} aria-label={`${site.name} — ${pick(lang, "Home", "Ana sayfa", "Startseite")}`}>
       {site.name}<span class="brand__dot" aria-hidden="true">.</span>
     </a>
 
-    <nav class="site-nav" aria-label="Primary">
+    <nav class="site-nav" aria-label={pick(lang, "Primary navigation", "Ana gezinme", "Hauptnavigation")}>
       <a
         class="site-nav__link"
         href={localePath(lang, "/projects")}
@@ -91,7 +91,7 @@ const bookingActive = path === "/appointment";
 </header>
 
 <div class="menu" id="mobile-menu" data-menu hidden>
-  <nav class="menu__nav" aria-label="Mobile">
+  <nav class="menu__nav" aria-label={pick(lang, "Mobile navigation", "Mobil gezinme", "Mobile Navigation")}>
     <a class="menu__link" href={localePath(lang, "/projects")} aria-current={workActive ? "page" : undefined}>
       <span class="menu__index" aria-hidden="true">01</span>
       <span class="menu__label">
@@ -147,17 +147,22 @@ const bookingActive = path === "/appointment";
   if (toggle && menu) {
     let closeTimer: number | undefined;
 
+    const pageContent = document.querySelectorAll<HTMLElement>("main, #site-footer");
     const setOpen = (open: boolean) => {
       window.clearTimeout(closeTimer);
       toggle.setAttribute("aria-expanded", String(open));
       document.documentElement.classList.toggle("menu-open", open);
+      pageContent.forEach((element) => { element.inert = open; });
+      menu.inert = !open;
 
       if (open) {
         menu.hidden = false;
         // Wait for the next frame instead of reading offsetWidth, which would
         // force a synchronous layout on every menu open.
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => menu.classList.add("is-open"));
+          requestAnimationFrame(() => {
+            if (toggle.getAttribute("aria-expanded") === "true") menu.classList.add("is-open");
+          });
         });
         menu.querySelector<HTMLAnchorElement>("a")?.focus();
       } else {

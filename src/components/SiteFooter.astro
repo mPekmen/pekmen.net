@@ -2,7 +2,7 @@
 import L10n from "./L10n.astro";
 import IconArrow from "./IconArrow.astro";
 import { site } from "../data/site";
-import { langOf, localePath } from "../i18n/locale";
+import { langOf, localePath, pick } from "../i18n/locale";
 
 const lang = langOf(Astro);
 ---
@@ -47,7 +47,7 @@ const lang = langOf(Astro);
 
     <div class="footer__meta">
       <div class="footer__brand">
-        <a class="brand" href={localePath(lang, "/")} aria-label={`${site.name} — home`}>
+        <a class="brand" href={localePath(lang, "/")} aria-label={`${site.name} — ${pick(lang, "Home", "Ana sayfa", "Startseite")}`}>
           {site.name}<span class="brand__dot" aria-hidden="true">.</span>
         </a>
         <p>
@@ -59,7 +59,7 @@ const lang = langOf(Astro);
         </p>
       </div>
 
-      <nav class="footer__col" aria-label="Footer">
+      <nav class="footer__col" aria-label={pick(lang, "Footer navigation", "Alt bilgi gezinmesi", "Fußnavigation")}>
         <h2><L10n en="Sitemap" tr="Sayfalar" de="Seiten" /></h2>
         <a href={localePath(lang, "/projects")}><L10n en="Work" tr="Projeler" de="Arbeiten" /></a>
         <a href={localePath(lang, "/blog")}><L10n en="Writing" tr="Yazılar" de="Notizen" /></a>

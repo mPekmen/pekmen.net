@@ -1,6 +1,6 @@
 ---
 import { LANGS, LANG_LABELS } from "../i18n/languages";
-import { langOf, localePath, pathOf } from "../i18n/locale";
+import { langOf, localePath, pathOf, pick } from "../i18n/locale";
 
 interface Props {
   class?: string;
@@ -13,7 +13,7 @@ const target = pathOf(Astro);
 const search = Astro.url.search;
 ---
 
-<nav class={className} aria-label="Language">
+<nav class={className} aria-label={pick(active, "Language", "Dil", "Sprache")}>
   {
     LANGS.map((lang) => (
       <a

@@ -394,7 +394,7 @@ blockquote {
   color: var(--ink);
 }
 
-.lang__btn[aria-pressed="true"] {
+.lang__btn[aria-current="true"] {
   color: var(--green);
 }
 
@@ -3302,29 +3302,6 @@ html.menu-open {
   color: var(--ink-soft);
 }
 
-.plate__live {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding-bottom: 0.15rem;
-  border-bottom: 1px solid currentColor;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--green);
-  transition: gap 0.25s var(--ease);
-}
-
-.plate__live svg {
-  width: 0.7rem;
-  height: 0.7rem;
-}
-
-.plate__live:hover {
-  gap: 0.65rem;
-}
-
 @media (hover: hover) and (min-width: 901px) {
   .plate__title:hover .plate__title-text {
     color: var(--green);
@@ -3413,13 +3390,6 @@ html.menu-open {
   max-width: 34rem;
 }
 
-.case-head__role {
-  font-size: 0.6875rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
 .case-head__title {
   font-size: clamp(2.25rem, 4.2vw, 3.5rem);
   font-weight: 500;
@@ -3435,18 +3405,6 @@ html.menu-open {
   letter-spacing: -0.015em;
   color: var(--ink-soft);
   text-wrap: pretty;
-}
-
-.case-head__shot {
-  display: block;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  background: var(--cream-2);
-}
-
-.case-head__shot img {
-  width: 100%;
-  height: auto;
 }
 
 .case-grid {
@@ -3486,37 +3444,6 @@ html.menu-open {
   font-size: 0.9375rem;
   line-height: 1.45;
   letter-spacing: -0.01em;
-}
-
-.case-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--green);
-  background: var(--green);
-  color: var(--cream);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transition: background-color 0.25s var(--ease), color 0.25s var(--ease);
-}
-
-.case-link svg {
-  width: 0.85rem;
-  height: 0.85rem;
-  transition: transform 0.3s var(--ease);
-}
-
-.case-link:hover {
-  background: transparent;
-  color: var(--green);
-}
-
-.case-link:hover svg {
-  transform: translate(2px, -2px);
 }
 
 .case-body {
@@ -3641,124 +3568,6 @@ html.menu-open {
   transform: translate(2px, -2px);
 }
 
-/* ==========================================================================
-   Note layout (/projects/pekmen-net)
-   One column: title, capture, a short paragraph, one meta line.
-   ========================================================================== */
-
-.note-head {
-  display: grid;
-  gap: 0.9rem;
-  padding-block: clamp(2.25rem, 4vw, 3.5rem) clamp(1.75rem, 3vw, 2.5rem);
-}
-
-.note-head > * {
-  max-width: 40rem;
-}
-
-.note-title {
-  font-size: clamp(2rem, 3.6vw, 3rem);
-  font-weight: 500;
-  letter-spacing: -0.045em;
-  line-height: 1;
-}
-
-.note-lead {
-  max-width: 36ch;
-  font-size: clamp(1.0625rem, 1.5vw, 1.25rem);
-  line-height: 1.5;
-  letter-spacing: -0.01em;
-  color: var(--ink-soft);
-  text-wrap: pretty;
-}
-
-.note-body {
-  display: grid;
-  gap: clamp(1.75rem, 3vw, 2.5rem);
-  padding-bottom: clamp(3rem, 6vw, 5rem);
-}
-
-.note-shot {
-  max-width: 48rem;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  background: var(--cream-2);
-}
-
-.note-shot img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.note-copy {
-  display: grid;
-  gap: 1.5rem;
-  max-width: 48rem;
-}
-
-.note-text {
-  max-width: 38rem;
-  font-size: 1.0625rem;
-  line-height: 1.65;
-  color: var(--ink);
-  text-wrap: pretty;
-}
-
-.note-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1.5rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--line-strong);
-}
-
-.note-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1rem;
-  font-size: 0.6875rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.note-facts span {
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.note-facts span + span::before {
-  content: "·";
-  color: var(--line-strong);
-}
-
-.note-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding-bottom: 0.15rem;
-  border-bottom: 1px solid currentColor;
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--green);
-  transition: gap 0.25s var(--ease);
-}
-
-.note-live svg {
-  width: 0.75rem;
-  height: 0.75rem;
-}
-
-.note-live:hover {
-  gap: 0.65rem;
-}
-
 @media (max-width: 900px) {
   .plate,
   .plate:nth-child(even) {
@@ -3813,21 +3622,4 @@ html.menu-open {
     height: 2.5rem;
   }
 
-  .note-facts {
-    display: grid;
-    gap: 0.3rem;
-  }
-
-  .note-facts span {
-    display: block;
-  }
-
-  .note-facts span + span::before {
-    content: none;
-  }
-
-  .note-meta {
-    align-items: flex-start;
-    flex-direction: column;
-  }
 }

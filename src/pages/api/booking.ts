@@ -99,8 +99,10 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
   }
 
   try {
-    const event = await coordinateBooking<BookingConfirmation>(locals.bookingCoordinator, { action: "create", input: body });
-    return json({ ok: true, event });
+    const { start, end, status } = await coordinateBooking<BookingConfirmation>(
+      locals.bookingCoordinator, { action: "create", input: body },
+    );
+    return json({ ok: true, event: { start, end, status } });
   } catch (error) {
     return errorResponse(error);
   }

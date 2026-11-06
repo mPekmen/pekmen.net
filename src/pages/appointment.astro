@@ -12,15 +12,15 @@ const live = isBookingConfigured();
   title="Book a call — Pekmen"
   titleTr="Randevu al — Pekmen"
   titleDe="Termin buchen — Pekmen"
-  description="Book a free 30-minute call with Pekmen. Pick a slot and it lands in both calendars."
-  descriptionTr="Pekmen ile ücretsiz 30 dakikalık görüşme ayarlayın. Bir saat seçin, iki takvime de düşsün."
-  descriptionDe="Buchen Sie ein kostenloses 30-Minuten-Gespräch mit Pekmen. Slot wählen, beide Kalender sind synchron."
+  description="Request a free Google Meet call with Pekmen. You’ll receive a calendar invitation after approval."
+  descriptionTr="Pekmen ile ücretsiz bir Google Meet görüşmesi talep edin. Onaydan sonra takvim daveti alırsınız."
+  descriptionDe="Fragen Sie ein kostenloses Google-Meet-Gespräch mit Pekmen an. Nach der Bestätigung erhalten Sie eine Kalendereinladung."
 >
   <section class="page-head">
     <div class="container">
       <div class="page-head__top">
         <span class="label">
-          (Booking) <L10n en="30 minutes" tr="30 dakika" de="30 Minuten" />
+          <L10n en="(Booking) 30 minutes" tr="(Randevu) 30 dakika" de="(Termin) 30 Minuten" />
         </span>
         <span class="label label--muted">
           <L10n
@@ -37,9 +37,9 @@ const live = isBookingConfigured();
         <div class="page-head__aside">
           <p class="page-head__intro">
             <L10n
-              en="30 minutes, Google Meet, no charge. Pick a slot that works — it lands in my calendar and yours."
-              tr="30 dakika, Google Meet, ücretsiz. Size uyan bir saat seçin — hem benim hem sizin takviminize düşsün."
-              de="30 Minuten, Google Meet, kostenlos. Wählen Sie einen passenden Slot — er landet in beiden Kalendern."
+              en="A free 30-minute call on Google Meet. Choose a time and send a request."
+              tr="Google Meet üzerinden ücretsiz 30 dakikalık görüşme. Uygun bir saat seçip talebinizi gönderin."
+              de="Ein kostenloses 30-Minuten-Gespräch über Google Meet. Wählen Sie eine passende Zeit und senden Sie Ihre Anfrage."
             />
           </p>
         </div>
@@ -95,9 +95,9 @@ const live = isBookingConfigured();
           {
             live ? (
               <L10n
-                en="Bookings write straight to Google Calendar, so the time is confirmed instantly."
-                tr="Randevular doğrudan Google Calendar'a yazılır; saat anında kesinleşir."
-                de="Buchungen werden direkt in Google Calendar geschrieben — die Zeit ist sofort bestätigt."
+                en="Your requested time is held while I review it. After approval, you’ll receive a calendar invitation."
+                tr="Talebinizi incelerken seçtiğiniz saat ayrılır. Onaydan sonra takvim daveti alırsınız."
+                de="Die gewünschte Zeit bleibt während der Prüfung reserviert. Nach der Bestätigung erhalten Sie eine Kalendereinladung."
               />
             ) : (
               <L10n
