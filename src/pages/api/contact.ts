@@ -8,6 +8,7 @@ import { sendEmail } from "../../server/email";
 import { emailLayout } from "../../server/email-template";
 import { clientIp, isSameOrigin, json, readRequestObject } from "../../server/http";
 import { rateLimit } from "../../server/rate-limit";
+import { saveMessage } from "../../server/studio-messages";
 
 export const prerender = false;
 
@@ -17,7 +18,7 @@ const MAX = {
   message: 5000,
 };
 
-export const POST: APIRoute = async ({ request, clientAddress }) => {
+export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
   if (!isSameOrigin(request)) {
     return json({ ok: false, error: "forbidden" }, 403);
   }
@@ -58,7 +59,18 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return json({ ok: false, error: "invalid_email" }, 400);
   }
 
+  let stored = false;
+  if (locals?.studioMessages) {
+    try {
+      await saveMessage(locals.studioMessages, { name, email, body: message });
+      stored = true;
+    } catch {
+      console.warn("Studio inbox write failed");
+    }
+  }
+
   if (!isEmailConfigured()) {
+    if (stored) return json({ ok: true });
     return json(
       {
         ok: false,
@@ -106,6 +118,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
     return json({ ok: true });
   } catch {
+    if (stored) return json({ ok: true });
     return json({ ok: false, error: "send_failed" }, 502);
   }
 };

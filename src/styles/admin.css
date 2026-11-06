@@ -38,6 +38,7 @@
   padding: 1.5rem 1rem 1rem;
   background: var(--cream);
   border-inline-end: 1px solid var(--line);
+  overflow-y: auto;
 }
 
 .studio-brand {
@@ -100,6 +101,19 @@
 .studio-account .studio-site { justify-content: space-between; }
 
 .studio-main { min-width: 0; padding: 2.5rem clamp(1.25rem, 4vw, 4rem) 4rem; }
+.studio-languages { display: flex; justify-content: end; gap: 0.25rem; max-width: 72rem; margin: 0 auto 0.75rem; }
+.studio-languages a { display: grid; place-items: center; min-width: 2.75rem; min-height: 2.75rem; color: var(--ink-soft); font-size: 0.8125rem; }
+.studio-languages a[aria-current] { color: var(--green-deep); font-weight: 650; text-decoration: underline; }
+.studio-module-row, .studio-module-actions, .studio-message summary, .studio-message-body { padding: 0.85rem 1.1rem; }
+.studio-module-row, .studio-message { border-block-start: 1px solid var(--line); }
+.studio-module-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem 1rem; align-items: start; }
+.studio-module-row .studio-links { grid-column: 1 / -1; }
+.studio-module-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.studio-module-actions [aria-current] { border-color: var(--green); color: var(--green-deep); }
+.studio-message summary { cursor: pointer; overflow-wrap: anywhere; }
+.studio-message summary time, .studio-message summary .studio-status { margin-inline-start: 0.6rem; }
+.studio-message-body { display: grid; gap: 0.75rem; overflow-wrap: anywhere; }
+.studio-message-body p { white-space: pre-wrap; }
 .studio-workspace { max-width: 72rem; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
 .studio-page-header { display: flex; justify-content: space-between; align-items: end; gap: 1rem; }
 .studio-page-header > div { min-width: 0; }
@@ -255,7 +269,7 @@
   .studio-brand small, .studio-account .studio-site { display: none; }
   .studio-account { grid-column: 2; grid-row: 1; margin: 0; padding: 0; border: 0; }
   .studio-nav { grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .studio-nav a { justify-content: center; gap: 0.35rem; padding-inline: 0.25rem; font-size: 0.8125rem; }
+  .studio-nav a { justify-content: center; padding-inline: 0.25rem; font-size: 0.8125rem; text-align: center; white-space: normal; }
   .studio-main { padding: 1.2rem 0.85rem 2.5rem; }
   .studio-page-header { align-items: start; }
   .studio-system-grid { grid-template-columns: minmax(0, 1fr); }

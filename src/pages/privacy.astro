@@ -37,9 +37,9 @@ const sections = [
         <div class="page-head__aside">
           <p class="page-head__intro">
             <L10n
-              en="Short version: your message goes to my inbox, a booking goes to my calendar, and nothing is sold, profiled or tracked. The details are below."
-              tr="Kısa hâli: mesajınız doğrudan bana gelir, randevu takvimime yazılır; hiçbir veri satılmaz, profillenmez, izlenmez. Ayrıntılar aşağıda."
-              de="Kurzfassung: Ihre Nachricht landet in meinem Postfach, eine Buchung in meinem Kalender. Nichts wird verkauft, profiliert oder getrackt. Details unten."
+              en="Your message goes to my inbox, booking requests go to my calendar, and Cloudflare Web Analytics measures how the site is used and how it performs."
+              tr="Mesajınız gelen kutuma, randevu talebiniz takvimime ulaşır. Cloudflare Web Analytics sitenin kullanımını ve performansını ölçer."
+              de="Ihre Nachricht geht an mein Postfach, Terminanfragen an meinen Kalender. Cloudflare Web Analytics misst die Nutzung und Leistung der Website."
             />
           </p>
         </div>
@@ -73,9 +73,9 @@ const sections = [
           <h2><L10n en="What is collected" tr="Hangi veriler toplanıyor" de="Welche Daten erhoben werden" /></h2>
           <p>
             <L10n
-              en="Only what you type or what a request needs to work — nothing else:"
-              tr="Yalnızca sizin yazdıklarınız ve bir isteğin çalışması için gereken teknik bilgiler:"
-              de="Nur das, was Sie eingeben, und was eine Anfrage technisch braucht:"
+              en="Forms and booking requests use the following information:"
+              tr="Formlar ve randevu talepleri şu bilgileri kullanır:"
+              de="Formulare und Terminanfragen verwenden die folgenden Angaben:"
             />
           </p>
           <ul>
@@ -110,9 +110,9 @@ const sections = [
           </ul>
           <p>
             <L10n
-              en="There are no analytics scripts, no advertising pixels, no tracking cookies and no third-party embeds on this site."
-              tr="Sitede analiz betiği, reklam pikseli, takip çerezi veya üçüncü taraf gömme içerik yok."
-              de="Es gibt keine Analyse-Skripte, keine Werbe-Pixel, keine Tracking-Cookies und keine eingebetteten Drittanbieter-Inhalte."
+              en="Cloudflare Web Analytics reports site usage and page performance without using cookies for analytics."
+              tr="Cloudflare Web Analytics, analiz çerezi kullanmadan site kullanımını ve sayfa performansını raporlar."
+              de="Cloudflare Web Analytics erfasst die Nutzung der Website und die Seitenleistung ohne Analyse-Cookies."
             />
           </p>
         </section>
@@ -154,12 +154,17 @@ const sections = [
             </li>
             <li>
               <L10n
-                en="The hosting provider that serves these pages and runs the booking API."
-                tr="Bu sayfaları sunan ve randevu API'sini çalıştıran barındırma sağlayıcısı."
-                de="Der Hosting-Anbieter, der diese Seiten ausliefert und die Buchungs-API betreibt."
+                en="Cloudflare hosts this site, runs the booking API and provides web analytics."
+                tr="Cloudflare siteyi barındırır, randevu API’sini çalıştırır ve web analizi sağlar."
+                de="Cloudflare hostet die Website, betreibt die Buchungs-API und stellt die Webanalyse bereit."
               />
             </li>
           </ul>
+          {Astro.locals.studioMessages && <p><L10n
+            en="Cloudflare also stores a copy of contact form submissions in the private Studio inbox."
+            tr="Cloudflare ayrıca iletişim formu iletilerinin bir kopyasını Studio’nun özel gelen kutusunda saklar."
+            de="Cloudflare speichert außerdem eine Kopie der Kontaktanfragen im privaten Studio-Posteingang."
+          /></p>}
           <p>
             <L10n
               en="None of them receive more than the fields above, and nothing is shared for marketing or profiling."

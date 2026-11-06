@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DatabaseSync } from "node:sqlite";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { GET as bookingGet, POST as bookingPost } from "../src/pages/api/booking.ts";
@@ -11,6 +11,9 @@ import { POST as cancelPost } from "../src/pages/api/admin/cancel.ts";
 import { POST as confirmPost } from "../src/pages/api/admin/confirm.ts";
 import { POST as reschedulePost } from "../src/pages/api/admin/reschedule.ts";
 import { POST as loginPost } from "../src/pages/api/admin/login.ts";
+import { POST as logoutPost } from "../src/pages/api/admin/logout.ts";
+import { POST as messagePost } from "../src/pages/api/admin/messages.ts";
+import { inboxSummary, listMessages } from "../src/server/studio-messages.ts";
 import { GET as adminBookings } from "../src/pages/api/admin/bookings.ts";
 import { adminCsrfToken, createSessionToken, verifySessionToken } from "../src/server/admin.ts";
 import { createAdminRefresh } from "../src/admin-refresh.ts";
@@ -442,6 +445,61 @@ test("contact still sends a valid form to Resend with the visitor as reply-to", 
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { ok: true });
   assert.equal(external.mock.callCount(), 1);
+});
+
+test("Studio stores contact messages and protects read and archive actions", async (t) => {
+  const db = new DatabaseSync(":memory:");
+  t.after(() => db.close());
+  db.exec(readFileSync(new URL("../migrations/studio/0001_messages.sql", import.meta.url), "utf8"));
+  const locals = { studioMessages: { prepare: (sql) => ({
+    bind: (...values) => ({
+      async run() { db.prepare(sql).run(...values); return { success: true }; },
+      async first() { return db.prepare(sql).get(...values) ?? null; },
+      async all() { return { results: db.prepare(sql).all(...values) }; },
+    }),
+    async first() { return db.prepare(sql).get() ?? null; },
+  }) } };
+  const external = mockFetch(t, (url) => {
+    assert.equal(url.href, "https://api.resend.com/emails");
+    return new Response(null, { status: 502 });
+  });
+  const payload = "<img src=x onerror=alert(1)>\n' OR 1=1";
+  const body = JSON.stringify({ name: "Visitor", email: "visitor@example.test", message: payload });
+  assert.equal((await contactPost(request("contact", body, "application/json", locals))).status, 200);
+  assert.equal(external.mock.callCount(), 1);
+  assert.equal(await inboxSummary(locals.studioMessages), 1);
+  const [{ id, body: saved }] = (await listMessages(locals.studioMessages, false, 1)).messages;
+  assert.equal(saved, payload);
+
+  const change = (action, authenticated = true, options = {}) => messagePost(adminContext(
+    "messages", adminRequest(id, authenticated, locals), {
+      ...options, editForm(form) { form.set("action", action); options.editForm?.(form); },
+    },
+  ));
+  assert.equal((await change("read", false)).headers.get("location"), "/admin?error=auth");
+  assert.equal((await change("read", true, { origin: "https://example.test" })).status, 403);
+  assert.equal((await change("read", true, { editForm: (form) => form.delete("csrf") })).status, 403);
+  assert.equal((await change("constructor")).status, 400);
+  assert.equal(await inboxSummary(locals.studioMessages), 1);
+  assert.equal((await change("read")).headers.get("location"), "/admin/messages?message=updated");
+  assert.equal(await inboxSummary(locals.studioMessages), 0);
+  await change("unread");
+  await change("archive");
+  assert.equal((await listMessages(locals.studioMessages, false, 1)).messages.length, 0);
+  assert.equal((await listMessages(locals.studioMessages, true, 1)).messages[0].id, id);
+  assert.equal(await inboxSummary(locals.studioMessages), 0);
+  await change("restore");
+  assert.equal(await inboxSummary(locals.studioMessages), 1);
+});
+
+test("logout requires a valid session and CSRF token before clearing the cookie", async () => {
+  const context = adminContext("logout", adminRequest("logout"));
+  let deleted;
+  context.cookies.delete = (name, options) => { deleted = { name, options }; };
+  const invalid = adminContext("logout", adminRequest("logout"), { editForm: (form) => form.delete("csrf") });
+  assert.equal((await logoutPost(invalid)).status, 403);
+  assert.equal((await logoutPost(context)).headers.get("location"), "/admin");
+  assert.equal(deleted.options.path, "/");
 });
 
 test("booking holds the slot without inviting the guest and attempts both emails", async (t) => {

@@ -3,7 +3,11 @@ import type { BookingEvent } from "../../server/google";
 import { adminCsrfToken } from "../../server/admin";
 import { dateKeyInZone } from "../../server/time";
 
+import type { Lang } from "../../i18n/languages";
+import { studioT } from "../../server/studio";
+
 interface Props {
+  lang: Lang;
   booking: BookingEvent;
   session: string;
   timeZone: string;
@@ -11,12 +15,13 @@ interface Props {
   compact?: boolean;
 }
 
-const { booking, session, timeZone, leadHours, compact = false } = Astro.props;
+const { booking, session, timeZone, leadHours, lang, compact = false } = Astro.props;
+const t = studioT(lang);
 const pending = booking.bookingStatus === "pending";
 const dateKey = dateKeyInZone(new Date(booking.start), timeZone);
 const today = dateKeyInZone(new Date(), timeZone);
-const day = new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeZone });
-const time = new Intl.DateTimeFormat("tr-TR", { timeStyle: "short", timeZone });
+const day = new Intl.DateTimeFormat(lang, { dateStyle: "long", timeZone });
+const time = new Intl.DateTimeFormat(lang, { timeStyle: "short", timeZone });
 const csrf = (action: string) => adminCsrfToken(session, action);
 const link = (value: string, host: string) => {
   try {
@@ -26,8 +31,8 @@ const link = (value: string, host: string) => {
     return undefined;
   }
 };
-const calendarLink = link(booking.htmlLink, "calendar.google.com");
-const meetLink = link(booking.meetLink, "meet.google.com");
+const calendarLink = !pending && link(booking.htmlLink, "calendar.google.com");
+const meetLink = !pending && link(booking.meetLink, "meet.google.com");
 ---
 
 <li class:list={["studio-appointment", { "studio-appointment--compact": compact }]}
@@ -44,14 +49,14 @@ const meetLink = link(booking.meetLink, "meet.google.com");
     </div>
     <div class="studio-appointment-actions">
       <span class:list={["studio-status", pending ? "studio-status--attention" : "studio-status--good"]}>
-        {pending ? "Onay bekliyor" : "Onaylandı"}
+        {pending ? t("Onay bekliyor") : t("Onaylandı")}
       </span>
       {pending && (
         <form method="post" action="/api/admin/confirm">
           <input type="hidden" name="csrf" value={csrf("confirm")} />
           <input type="hidden" name="id" value={booking.id} />
           {!compact && <input type="hidden" name="returnTo" value="appointments" />}
-          <button class="studio-button studio-button--primary" type="submit" aria-label={`${booking.name} randevusunu onayla`}>Onayla</button>
+          <button class="studio-button studio-button--primary" type="submit" aria-label={`${t("Onayla")}: ${booking.name}`}>{t("Onayla")}</button>
         </form>
       )}
     </div>
@@ -59,43 +64,43 @@ const meetLink = link(booking.meetLink, "meet.google.com");
 
   {!compact && (
     <details class="studio-appointment-details" data-booking-editor>
-      <summary aria-label={`${booking.name} randevu ayrıntıları`}>Ayrıntılar ve işlemler</summary>
+      <summary aria-label={`${t("Ayrıntılar ve işlemler")}: ${booking.name}`}>{t("Ayrıntılar ve işlemler")}</summary>
       <div class="studio-detail-content">
         {booking.note && <p class="studio-booking-note">{booking.note}</p>}
         <div class="studio-links">
-          {calendarLink && <a href={calendarLink} target="_blank" rel="noopener noreferrer">Google Takvim ↗</a>}
+          {calendarLink && <a href={calendarLink} target="_blank" rel="noopener noreferrer">{t("Google Takvim ↗")}</a>}
           {meetLink && <a href={meetLink} target="_blank" rel="noopener noreferrer">Google Meet ↗</a>}
         </div>
         <details class="studio-editor" data-booking-editor>
-          <summary>Tarihi değiştir</summary>
+          <summary>{t("Tarihi değiştir")}</summary>
           <form class="studio-editor-form" method="post" action="/api/admin/reschedule" data-reschedule>
             <input type="hidden" name="csrf" value={csrf("reschedule")} />
             <input type="hidden" name="id" value={booking.id} />
             <input type="hidden" name="returnTo" value="appointments" />
             <input type="hidden" name="requestId" value={crypto.randomUUID()} />
             <div class="studio-form-grid">
-              <label>Tarih<input type="date" name="date" value={dateKey} min={today} data-date required /></label>
-              <label>Saat<select name="start" data-slots disabled required><option value="">Tarih seçin</option></select></label>
+              <label>{t("Tarih")}<input type="date" name="date" value={dateKey} min={today} data-date required /></label>
+              <label>{t("Saat")}<select name="start" data-slots disabled required><option value="">{t("Tarih seçin")}</option></select></label>
             </div>
-            <label>Katılımcıya not (isteğe bağlı)<textarea name="message" rows="2" maxlength="500"></textarea></label>
+            <label>{t("Katılımcıya not (isteğe bağlı)")}<textarea name="message" rows="2" maxlength="500"></textarea></label>
             <div class="studio-editor-actions">
-              <button class="studio-button studio-button--primary" type="submit" data-submit disabled>Yeni saati gönder</button>
-              <span class="studio-muted" data-hint role="status">{leadHours > 0 ? `En az ${leadHours} saat sonraki uygun saatler listelenir.` : "Müsait saatler listelenir."}</span>
+              <button class="studio-button studio-button--primary" type="submit" data-submit disabled>{t("Yeni saati gönder")}</button>
+              <span class="studio-muted" data-hint role="status">{leadHours > 0 ? `${t("Müsait saatler listelenir.")} (${leadHours} ${t("saat")})` : t("Müsait saatler listelenir.")}</span>
             </div>
           </form>
         </details>
         <details class="studio-editor studio-editor--danger" data-booking-editor>
-          <summary>İptal et</summary>
+          <summary>{t("İptal et")}</summary>
           <form class="studio-editor-form" method="post" action="/api/admin/cancel">
             <input type="hidden" name="csrf" value={csrf("cancel")} />
             <input type="hidden" name="id" value={booking.id} />
             <input type="hidden" name="returnTo" value="appointments" />
             <p><strong>{booking.name}</strong> · {day.format(booking.start)} · {time.format(booking.start)} ({timeZone})</p>
-            <p>Randevu takvimden kaldırılır ve katılımcıya bildirim gönderilmeye çalışılır.</p>
+            <p>{t("Randevu takvimden kaldırılır ve katılımcıya bildirim gönderilmeye çalışılır.")}</p>
             <div class="studio-editor-actions">
-              <button class="studio-button" type="button" data-dismiss-cancel>Vazgeç</button>
+              <button class="studio-button" type="button" data-dismiss-cancel>{t("Vazgeç")}</button>
               <button class="studio-button studio-button--danger" type="submit"
-                name="confirm" value={csrf(`cancel-confirm:${booking.id}`)}>İptali onayla</button>
+                name="confirm" value={csrf(`cancel-confirm:${booking.id}`)}>{t("İptali onayla")}</button>
             </div>
           </form>
         </details>

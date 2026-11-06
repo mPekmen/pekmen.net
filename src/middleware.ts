@@ -3,6 +3,7 @@ import { env } from "cloudflare:workers";
 import type { APIContext, MiddlewareNext } from "astro";
 import { DEFAULT_LANG, isLang } from "./i18n/languages";
 import { normalisePath } from "./i18n/locale";
+import type { StudioDatabase } from "./server/studio-messages";
 
 /**
  * English lives at the unprefixed URL; Turkish and German live under `/tr/`
@@ -129,6 +130,7 @@ function isPrivate(pathname: string): boolean {
 
 export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.bookingCoordinator = env.BOOKING_COORDINATOR;
+  context.locals.studioMessages = (env as typeof env & { STUDIO_MESSAGES?: StudioDatabase }).STUDIO_MESSAGES;
   const response = await handle(context, next);
   const headers = new Headers(response.headers);
 

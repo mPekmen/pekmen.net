@@ -1,0 +1,16 @@
+---
+import { LANGS, type Lang } from "../../i18n/languages";
+import { studioT } from "../../i18n/studio-copy";
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = studioT(lang);
+const labels = { en: "English", tr: "Türkçe", de: "Deutsch" };
+---
+<nav class="studio-languages" aria-label={t("Dil")}>
+  {LANGS.map((item) => {
+    const params = new URLSearchParams(Astro.url.search);
+    params.set("lang", item);
+    return <a href={`?${params}`} lang={item} aria-label={labels[item]} aria-current={lang === item ? "true" : undefined}>{item.toUpperCase()}</a>;
+  })}
+</nav>

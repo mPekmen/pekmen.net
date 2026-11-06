@@ -1,0 +1,142 @@
+---
+import { LANGS, type Lang } from "../../i18n/languages";
+import { localePath, pick } from "../../i18n/locale";
+import { projects } from "../../data/projects";
+import { posts } from "../../data/posts";
+import { site } from "../../data/site";
+import { adminCsrfToken } from "../../server/admin";
+import { listMessages } from "../../server/studio-messages";
+import type { StudioSection } from "../../server/studio";
+import manifest from "../../../package.json";
+
+interface Props { section: StudioSection; lang: Lang; session: string }
+const { section, lang, session } = Astro.props;
+const l = (en: string, tr: string, de: string) => pick(lang, en, tr, de);
+const params = Astro.url.searchParams;
+const archived = params.get("view") === "archive";
+const index = Number(params.get("page") ?? 1);
+const page = Number.isSafeInteger(index) && index > 0 && index < 100_000 ? index : 1;
+const db = Astro.locals.studioMessages;
+const inbox = section === "messages" && db ? await listMessages(db, archived, page).catch(() => null) : null;
+const messageStatus = params.get("message");
+const messagePath = (next: number) => `?view=${archived ? "archive" : "inbox"}&page=${next}`;
+const time = new Intl.DateTimeFormat(lang, { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
+const date = new Intl.DateTimeFormat(lang, { dateStyle: "medium", timeZone: "UTC" });
+const csrf = section === "messages" && inbox ? adminCsrfToken(session, "messages") : undefined;
+const published = l("Published", "Yayında", "Veröffentlicht");
+---
+
+{section === "messages" && (
+  <section class="studio-card studio-module">
+    <header class="studio-section-head"><div>
+      <h2>{l("Contact form", "İletişim formu", "Kontaktformular")}</h2>
+      <p class="studio-muted">{l("Messages submitted after the inbox is connected.", "Gelen kutusu bağlandıktan sonra formdan iletilen mesajlar.", "Nachrichten, die nach Einrichtung des Posteingangs übermittelt wurden.")}</p>
+    </div></header>
+    {!db ? <p class="studio-empty">{l("Inbox storage is not connected. Check the email inbox for existing submissions.", "Mesaj deposu bağlı değil. Önceki iletiler için e-posta kutusunu kontrol edin.", "Der Nachrichtenspeicher ist nicht verbunden. Frühere Anfragen finden Sie im E-Mail-Postfach.")}</p>
+      : !inbox ? <p class="studio-empty" role="alert">{l("Could not read messages. Try refreshing.", "Mesajlar okunamadı. Sayfayı yenileyin.", "Nachrichten konnten nicht geladen werden. Bitte aktualisieren.")}</p>
+      : <>
+        <nav class="studio-module-actions" aria-label={l("Message folders", "Mesaj klasörleri", "Nachrichtenordner")}>
+          <a class="studio-button" href="?view=inbox" aria-current={!archived ? "page" : undefined}>{l("Inbox", "Gelen kutusu", "Posteingang")}</a>
+          <a class="studio-button" href="?view=archive" aria-current={archived ? "page" : undefined}>{l("Archive", "Arşiv", "Archiv")}</a>
+        </nav>
+        {messageStatus === "updated" && <p class="studio-empty" role="status">{l("Message updated.", "Mesaj güncellendi.", "Nachricht aktualisiert.")}</p>}
+        {(messageStatus === "error" || messageStatus === "missing") && <p class="studio-empty" role="alert">{l("Could not update the message.", "Mesaj güncellenemedi.", "Nachricht konnte nicht aktualisiert werden.")}</p>}
+        {inbox.messages.length === 0 && <p class="studio-empty">{l("No messages on this page.", "Bu sayfada mesaj yok.", "Auf dieser Seite sind keine Nachrichten.")}</p>}
+        {inbox.messages.map((item) => (
+          <details class="studio-message">
+            <summary>
+              <strong>{item.name}</strong>
+              <time datetime={new Date(item.created_at).toISOString()}>{time.format(item.created_at)}</time>
+              <span class:list={["studio-status", { "studio-status--attention": !item.read_at }]}>
+                {item.read_at ? l("Read", "Okundu", "Gelesen") : l("Unread", "Okunmadı", "Ungelesen")}
+              </span>
+            </summary>
+            <div class="studio-message-body">
+              <a href={`mailto:${encodeURIComponent(item.email)}`}>{item.email}</a>
+              <p>{item.body}</p>
+              <form class="studio-editor-actions" action="/api/admin/messages" method="post">
+                <input type="hidden" name="csrf" value={csrf} />
+                <input type="hidden" name="id" value={item.id} />
+                <input type="hidden" name="view" value={archived ? "archive" : "inbox"} />
+                <button class="studio-button" name="action" value={item.read_at ? "unread" : "read"}>
+                  {item.read_at ? l("Mark unread", "Okunmadı işaretle", "Als ungelesen markieren") : l("Mark read", "Okundu işaretle", "Als gelesen markieren")}
+                </button>
+                <button class="studio-button" name="action" value={archived ? "restore" : "archive"}>
+                  {archived ? l("Move to inbox", "Gelen kutusuna taşı", "In den Posteingang") : l("Archive", "Arşivle", "Archivieren")}
+                </button>
+              </form>
+            </div>
+          </details>
+        ))}
+        {(page > 1 || inbox.hasNext) && <nav class="studio-module-actions" aria-label={l("Message pages", "Mesaj sayfaları", "Nachrichtenseiten")}>
+          {page > 1 && <a class="studio-button" href={messagePath(page - 1)}>{l("Previous page", "Önceki sayfa", "Vorherige Seite")}</a>}
+          {inbox.hasNext && <a class="studio-button" href={messagePath(page + 1)}>{l("Next page", "Sonraki sayfa", "Nächste Seite")}</a>}
+        </nav>}
+      </>}
+  </section>
+)}
+
+{section === "analytics" && (
+  <section class="studio-card studio-module">
+    <header class="studio-section-head"><div>
+      <h2>Cloudflare Web Analytics</h2>
+      <p class="studio-muted">{l("Studio has no analytics data connection.", "Studio’ya bağlı bir istatistik veri kaynağı yok.", "Studio ist mit keiner Statistikdatenquelle verbunden.")}</p>
+    </div></header>
+    <p class="studio-empty">{l("Open Cloudflare to check whether Web Analytics is enabled for this site. Studio reporting requires server-side access to an analytics data source.", "Bu site için Web Analytics’in etkin olup olmadığını Cloudflare’da kontrol edin. Studio raporları için sunucu tarafında bir istatistik veri kaynağına erişim gerekir.", "Prüfen Sie in Cloudflare, ob Web Analytics für diese Website aktiviert ist. Berichte in Studio benötigen serverseitigen Zugriff auf eine Statistikdatenquelle.")}</p>
+    <div class="studio-module-actions"><a class="studio-button" href="https://dash.cloudflare.com/">{l("Open Cloudflare", "Cloudflare’ı aç", "Cloudflare öffnen")} ↗</a></div>
+  </section>
+)}
+
+{section === "projects" && (
+  <section class="studio-card studio-module">
+    <header class="studio-section-head"><div>
+      <h2>{l("Portfolio projects", "Portfolyo projeleri", "Portfolio-Projekte")} · {projects.length}</h2>
+      <p class="studio-muted">{l("Projects are edited in the repository.", "Projeler kaynak depoda düzenlenir.", "Projekte werden im Repository bearbeitet.")}</p>
+    </div></header>
+    {projects.map((item) => (
+      <article class="studio-module-row">
+        <div><h3>{item.title}</h3><p>{item.category[lang]} · {item.year}</p><p class="studio-muted">{item.tags.join(" · ")}</p></div>
+        <span class="studio-status">{item.archived ? l("Archived", "Arşivde", "Archiviert") : published}</span>
+        <div class="studio-links">
+          {LANGS.filter((locale) => item.summary[locale] && item.overview[locale] && item.sections.every((part) => part.title[locale] && part.body[locale])).map((locale) =>
+            <a lang={locale} href={localePath(locale, `/projects/${item.slug}/`)} aria-label={`${item.title} · ${locale.toUpperCase()}`}>{locale.toUpperCase()}</a>)}
+          {item.live && <a href={item.live}>{l("Live site", "Canlı site", "Live-Website")} ↗</a>}
+        </div>
+      </article>
+    ))}
+  </section>
+)}
+
+{section === "content" && (
+  <section class="studio-card studio-module">
+    <header class="studio-section-head"><div>
+      <h2>{l("Blog posts", "Blog yazıları", "Blogbeiträge")} · {posts.length}</h2>
+      <p class="studio-muted">{l("Posts are edited in the repository.", "Yazılar kaynak depoda düzenlenir.", "Beiträge werden im Repository bearbeitet.")}</p>
+    </div></header>
+    {posts.map((item) => (
+      <article class="studio-module-row">
+        <div><h3>{item.title[lang]}</h3><time datetime={item.date}>{date.format(new Date(item.date))}</time></div>
+        <span class="studio-status">{published}</span>
+        <div class="studio-links">
+          {LANGS.filter((locale) => item.title[locale] && item.excerpt[locale] && item.body.every((part) => part[locale])).map((locale) =>
+            <a lang={locale} href={localePath(locale, `/blog/${item.slug}/`)} aria-label={`${item.title[locale]} · ${locale.toUpperCase()}`}>{locale.toUpperCase()}</a>)}
+        </div>
+      </article>
+    ))}
+  </section>
+)}
+
+{section === "settings" && (
+  <section class="studio-card">
+    <header class="studio-section-head"><div>
+      <h2>{l("Site information", "Site bilgileri", "Website-Informationen")}</h2>
+      <p class="studio-muted">{l("Read-only deployment settings.", "Dağıtım ayarları bu ekranda yalnızca görüntülenebilir.", "Bereitstellungseinstellungen können hier eingesehen werden.")}</p>
+    </div></header>
+    <dl class="studio-properties">
+      <div><dt>{l("Website", "Web sitesi", "Website")}</dt><dd><a href={site.url}>pekmen.net</a></dd></div>
+      <div><dt>{l("Site languages", "Site dilleri", "Sprachen")}</dt><dd>English · Türkçe · Deutsch</dd></div>
+      <div><dt>{l("Application version", "Uygulama sürümü", "Anwendungsversion")}</dt><dd>{manifest.version}</dd></div>
+      <div><dt>{l("Message storage", "Mesaj deposu", "Nachrichtenspeicher")}</dt><dd>{db ? l("Binding present", "Bağlantı tanımlı", "Bindung vorhanden") : l("Not connected", "Bağlı değil", "Nicht verbunden")}</dd></div>
+    </dl>
+  </section>
+)}
