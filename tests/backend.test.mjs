@@ -453,6 +453,7 @@ test("contact still sends a valid form to Resend with the visitor as reply-to", 
 function studioDatabase(t) {
   const db = new DatabaseSync(":memory:");
   t.after(() => db.close());
+  db.exec("PRAGMA foreign_keys = ON");
   db.exec(readFileSync(new URL("../migrations/studio/0001_messages.sql", import.meta.url), "utf8"));
   db.exec(readFileSync(new URL("../migrations/studio/0002_management.sql", import.meta.url), "utf8"));
   return { prepare: (sql) => ({
@@ -498,6 +499,16 @@ test("Studio stores contact messages and protects read and archive actions", asy
   assert.equal(await inboxSummary(locals.studioMessages), 0);
   await change("restore");
   assert.equal(await inboxSummary(locals.studioMessages), 1);
+  assert.equal((await change("delete")).status, 400);
+  assert.equal((await change("delete", false, { editForm: (form) => form.set("confirmDelete", id) })).headers.get("location"), "/studio?error=auth");
+  assert.equal((await change("delete", true, { editForm: (form) => { form.set("confirmDelete", id); form.delete("csrf"); } })).status, 403);
+  const replyId = crypto.randomUUID();
+  await locals.studioMessages.prepare("INSERT INTO studio_replies (id, message_id, body, state, created_at) VALUES (?, ?, ?, ?, ?)")
+    .bind(replyId, id, "stored reply", "accepted", Date.now()).run();
+  assert.match((await change("delete", true, { editForm: (form) => form.set("confirmDelete", id) })).headers.get("location"), /message=deleted/);
+  assert.equal((await listMessages(locals.studioMessages, false, 1)).messages.length, 0);
+  assert.equal((await locals.studioMessages.prepare("SELECT id FROM studio_replies WHERE id = ?").bind(replyId).first()), null);
+  assert.match((await change("delete", true, { editForm: (form) => form.set("confirmDelete", id) })).headers.get("location"), /message=missing/);
 });
 
 test("Studio publication keeps drafts private, rejects stale edits and preserves source entries", async (t) => {
@@ -588,6 +599,21 @@ test("Studio Analytics reports only Cloudflare-provided visit groups", async (t)
   const result = await readStudioAnalytics(7);
   assert.deepEqual(result.groups, { daily: [{ label: "2026-10-30", value: 12 }], pages: [] });
   await readStudioAnalytics(7);
+  assert.equal(external.mock.callCount(), 1);
+});
+
+test("Studio Analytics includes today and distinguishes GraphQL errors from empty results", async (t) => {
+  Object.assign(process.env, { STUDIO_ANALYTICS_TOKEN: "test-token", STUDIO_ANALYTICS_ACCOUNT: "c".repeat(32), STUDIO_ANALYTICS_SITE: "d".repeat(32) });
+  t.after(() => { for (const name of ["TOKEN", "ACCOUNT", "SITE"]) delete process.env[`STUDIO_ANALYTICS_${name}`]; });
+  const external = mockFetch(t, (url, init) => {
+    assert.equal(url.href, "https://api.cloudflare.com/client/v4/graphql");
+    const query = JSON.parse(init.body).query;
+    const today = new Date().toISOString().slice(0, 10);
+    assert.match(query, /datetime_geq:/);
+    assert.ok(query.includes(today));
+    return Response.json({ errors: [{ message: "bad query" }], data: { viewer: { accounts: [{ daily: [] }] } } });
+  });
+  assert.equal((await readStudioAnalytics(30)).state, "unavailable");
   assert.equal(external.mock.callCount(), 1);
 });
 
