@@ -79,7 +79,7 @@ for (const input of document.querySelectorAll<HTMLInputElement>(".studio-body in
     const parsed = parseIso(value);
     return parsed ? new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(parsed) : labels.choose;
   };
-  const permitted = (date: string) => (!input.min || date >= input.min) && (!input.max || date <= input.max);
+  const permitted = (date: string) => (!date && !input.required) || ((!input.min || date >= input.min) && (!input.max || date <= input.max));
   const sync = () => {
     caption.textContent = format(input.value);
     trigger.classList.toggle("is-empty", !input.value);
@@ -160,6 +160,7 @@ for (const input of document.querySelectorAll<HTMLInputElement>(".studio-body in
     if (!panel.hidden && !host.contains(event.target as Node) && !label?.contains(event.target as Node)) close();
   });
   input.addEventListener("change", sync);
+  input.tabIndex = -1;
   input.dataset.calendarEnhanced = "true";
   sync();
 }
