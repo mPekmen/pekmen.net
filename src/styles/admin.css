@@ -504,6 +504,7 @@
 
 
 /* Progressive calendar — ISO form input remains the source of truth. */
+.studio-card:has(.studio-date-control) { overflow: visible; }
 .studio-date-control { position: relative; display: block; min-width: 0; }
 .studio-date-control input[type="date"][data-calendar-enhanced="true"] {
   position: absolute;
