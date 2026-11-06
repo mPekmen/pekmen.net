@@ -9,5 +9,5 @@ export const POST: APIRoute = async (context) => {
   if (form instanceof Response) return form;
   cookies.delete(ADMIN_COOKIE, { path: "/" });
 
-  return redirect("/admin", 303);
+  return redirect("/studio", 303);
 };

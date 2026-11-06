@@ -4,12 +4,13 @@ import L10n from "../../components/L10n.astro";
 import IconArrow from "../../components/IconArrow.astro";
 import SignatureMark from "../../components/SignatureMark.astro";
 import ProjectLinks from "../../components/ProjectLinks.astro";
-import { projects } from "../../data/projects";
 import { imageSrcSet } from "../../data/images";
+import { publicProjects } from "../../server/studio-content";
 import { site } from "../../data/site";
 import { langOf, localePath } from "../../i18n/locale";
 import "../../styles/showcase.css";
 
+const projects = await publicProjects(Astro.locals.studioMessages);
 const lang = langOf(Astro);
 const total = String(projects.length).padStart(2, "0");
 const sortedYears = projects.map((project) => project.year).sort();
@@ -47,7 +48,7 @@ const years = `${sortedYears[0]}–${sortedYears.at(-1)}`;
             en="Selected products and websites I designed and built, from appointment booking to local business sites."
             tr="Randevu uygulamalarından yerel işletme sitelerine, tasarlayıp geliştirdiğim seçili işler."
             de="Ausgewählte Produkte und Websites, die ich gestaltet und entwickelt habe – von Terminbuchung bis zu lokalen Unternehmen." /></p>
-          <span class="label label--muted">{total} <L10n en="projects" tr="proje" de="Projekte" /> · {years}</span>
+          <span class="label label--muted">{total} <L10n en="projects" tr="proje" de="Projekte" /> {sortedYears.length > 0 && ` · ${years}`}</span>
         </div>
       </div>
     </div>

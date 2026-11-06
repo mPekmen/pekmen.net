@@ -13,6 +13,9 @@ import { POST as reschedulePost } from "../src/pages/api/admin/reschedule.ts";
 import { POST as loginPost } from "../src/pages/api/admin/login.ts";
 import { POST as logoutPost } from "../src/pages/api/admin/logout.ts";
 import { POST as messagePost } from "../src/pages/api/admin/messages.ts";
+import { POST as contentPost } from "../src/pages/api/admin/content.ts";
+import { contentRow, publicIntro, publicPosts, publicProjects, serveCover, storeCover } from "../src/server/studio-content.ts";
+import { readStudioAnalytics } from "../src/server/studio-analytics.ts";
 import { inboxSummary, listMessages } from "../src/server/studio-messages.ts";
 import { GET as adminBookings } from "../src/pages/api/admin/bookings.ts";
 import { adminCsrfToken, createSessionToken, verifySessionToken } from "../src/server/admin.ts";
@@ -207,10 +210,10 @@ test("admin POSTs require the expected origin, the right session, and explicit c
     (body) => body.set("id", "another-event"),
   ]) {
     const response = await check({ editForm });
-    assert.equal(response.headers.get("location"), "/admin?error=cancel_confirmation");
+    assert.equal(response.headers.get("location"), "/studio?error=cancel_confirmation");
   }
   assert.equal((await adminBookings({ cookies: { get: () => undefined } })).status, 401);
-  for (const [destination, expected] of [["appointments", "/admin/appointments"], ["//example.test", "/admin"]]) {
+  for (const [destination, expected] of [["appointments", "/studio/appointments"], ["//example.test", "/studio"]]) {
     const response = await check({ editForm: (body) => {
       body.delete("confirm");
       body.set("returnTo", destination);
@@ -237,7 +240,7 @@ test("login CSRF is tied to a separate pre-login token and issues a fresh authen
   assert.equal(verifySessionToken("1893999999999." + "a".repeat(64)), false);
   const form = adminRequest("login");
   const bad = await loginPost(adminContext("login", form, { session: createSessionToken() }));
-  assert.equal(bad.headers.get("location"), "/admin?error=csrf");
+  assert.equal(bad.headers.get("location"), "/studio?error=csrf");
 
   const context = adminContext("login", form, {
     session: login,
@@ -246,7 +249,7 @@ test("login CSRF is tied to a separate pre-login token and issues a fresh authen
   let issued;
   context.cookies.delete = () => {};
   context.cookies.set = (_name, session) => { issued = session; };
-  assert.equal((await loginPost(context)).headers.get("location"), "/admin");
+  assert.equal((await loginPost(context)).headers.get("location"), "/studio");
   assert.equal(verifySessionToken(issued), true);
   assert.notEqual(issued, login);
 });
@@ -328,10 +331,10 @@ test("calendar success and notification failure are independent, and timeouts st
     });
   });
   const confirmed = await adminConfirm(adminRequest("marked", true, locals));
-  assert.equal(confirmed.headers.get("location"), "/admin?ok=confirmed&mail=0");
+  assert.equal(confirmed.headers.get("location"), "/studio?ok=confirmed&mail=0");
   timeout = true;
   const uncertain = await adminConfirm(adminRequest("marked", true, locals));
-  assert.equal(uncertain.headers.get("location"), "/admin?error=booking_in_progress");
+  assert.equal(uncertain.headers.get("location"), "/studio?error=booking_in_progress");
 });
 
 test("admin mutations reject unrelated events and still require an authenticated session", async (t) => {
@@ -355,11 +358,11 @@ test("admin mutations reject unrelated events and still require an authenticated
 
   for (const handler of [adminConfirm, adminReschedule, adminCancel]) {
     const unauthenticated = await handler(adminRequest("title-only", false));
-    assert.equal(unauthenticated.headers.get("location"), "/admin?error=auth");
+    assert.equal(unauthenticated.headers.get("location"), "/studio?error=auth");
     for (const id of ["title-only", "similar-description", "other-marker"]) {
       const response = await handler(adminRequest(id, true, locals));
       assert.equal(response.status, 303);
-      assert.equal(response.headers.get("location"), "/admin?error=not_found");
+      assert.equal(response.headers.get("location"), "/studio?error=not_found");
     }
   }
   assert.equal(reads, 9);
@@ -394,7 +397,7 @@ test("admin can manage marked and legacy bookings", async (t) => {
   for (const id of ["marked", "legacy"]) {
     for (const [handler, status] of [[adminConfirm, "confirmed"], [adminReschedule, "rescheduled"], [adminCancel, "canceled"]]) {
       const response = await handler(adminRequest(id, true, locals));
-      assert.equal(response.headers.get("location"), `/admin?ok=${status}&mail=1`);
+      assert.equal(response.headers.get("location"), `/studio?ok=${status}&mail=1`);
     }
   }
   assert.deepEqual(writes, [
@@ -447,18 +450,23 @@ test("contact still sends a valid form to Resend with the visitor as reply-to", 
   assert.equal(external.mock.callCount(), 1);
 });
 
-test("Studio stores contact messages and protects read and archive actions", async (t) => {
+function studioDatabase(t) {
   const db = new DatabaseSync(":memory:");
   t.after(() => db.close());
   db.exec(readFileSync(new URL("../migrations/studio/0001_messages.sql", import.meta.url), "utf8"));
-  const locals = { studioMessages: { prepare: (sql) => ({
+  db.exec(readFileSync(new URL("../migrations/studio/0002_management.sql", import.meta.url), "utf8"));
+  return { prepare: (sql) => ({
     bind: (...values) => ({
       async run() { db.prepare(sql).run(...values); return { success: true }; },
       async first() { return db.prepare(sql).get(...values) ?? null; },
       async all() { return { results: db.prepare(sql).all(...values) }; },
     }),
     async first() { return db.prepare(sql).get() ?? null; },
-  }) } };
+  }) };
+}
+
+test("Studio stores contact messages and protects read and archive actions", async (t) => {
+  const locals = { studioMessages: studioDatabase(t) };
   const external = mockFetch(t, (url) => {
     assert.equal(url.href, "https://api.resend.com/emails");
     return new Response(null, { status: 502 });
@@ -476,12 +484,12 @@ test("Studio stores contact messages and protects read and archive actions", asy
       ...options, editForm(form) { form.set("action", action); options.editForm?.(form); },
     },
   ));
-  assert.equal((await change("read", false)).headers.get("location"), "/admin?error=auth");
+  assert.equal((await change("read", false)).headers.get("location"), "/studio?error=auth");
   assert.equal((await change("read", true, { origin: "https://example.test" })).status, 403);
   assert.equal((await change("read", true, { editForm: (form) => form.delete("csrf") })).status, 403);
   assert.equal((await change("constructor")).status, 400);
   assert.equal(await inboxSummary(locals.studioMessages), 1);
-  assert.equal((await change("read")).headers.get("location"), "/admin/messages?message=updated");
+  assert.equal((await change("read")).headers.get("location"), "/studio/messages?message=updated");
   assert.equal(await inboxSummary(locals.studioMessages), 0);
   await change("unread");
   await change("archive");
@@ -492,13 +500,104 @@ test("Studio stores contact messages and protects read and archive actions", asy
   assert.equal(await inboxSummary(locals.studioMessages), 1);
 });
 
+test("Studio publication keeps drafts private, rejects stale edits and preserves source entries", async (t) => {
+  const db = studioDatabase(t);
+  const locals = { studioMessages: db };
+  const entry = "studio-test-post";
+  const submit = (action, revision = "", options = {}) => contentPost(adminContext(
+    "content", adminRequest(entry, options.authenticated ?? true, locals), {
+      origin: options.origin,
+      editForm(form) {
+        form.set("kind", options.kind ?? "post");
+        form.set("slug", options.slug ?? entry);
+        form.set("action", action);
+        form.set("revision", revision);
+        form.set("date", "2026-10-30");
+        for (const lang of ["en", "tr", "de"]) {
+          form.set(`title.${lang}`, `Title ${lang}`);
+          form.set(`excerpt.${lang}`, "Summary");
+          form.set(`body.${lang}`, `<script>example</script>\n\n${options.body ?? "Draft text"}`);
+          form.set(`intro.${lang}`, `Intro ${lang}`);
+        }
+        if (options.remove) form.delete(options.remove);
+      },
+    },
+  ));
+  assert.equal((await submit("publish", "", { authenticated: false })).headers.get("location"), "/studio?error=auth");
+  assert.equal((await submit("publish", "", { origin: "https://untrusted.test" })).status, 403);
+  assert.equal((await submit("publish", "", { remove: "csrf" })).status, 403);
+  assert.match((await submit("publish", "", { remove: "body.de" })).headers.get("location"), /result=invalid/);
+  assert.match((await submit("save")).headers.get("location"), /result=saved/);
+  assert.ok(!(await publicPosts(db)).some((item) => item.slug === entry));
+  const draft = await contentRow(db, "post", entry);
+  assert.match((await submit("publish", draft.revision)).headers.get("location"), /result=saved/);
+  assert.match((await submit("save", draft.revision)).headers.get("location"), /result=conflict/);
+  let published = await contentRow(db, "post", entry);
+  await submit("save", published.revision, { body: "Changed privately" });
+  assert.equal((await publicPosts(db)).find((item) => item.slug === entry).body[1].tr, "Draft text");
+  published = await contentRow(db, "post", entry);
+  await submit("archive", published.revision);
+  assert.ok(!(await publicPosts(db)).some((item) => item.slug === entry));
+  assert.ok((await publicPosts(db)).some((item) => item.slug === "cfmoto-450sr-25854-km"));
+  assert.equal((await publicProjects(db)).length, 3);
+  await submit("publish", "", { kind: "site" });
+  assert.equal((await publicIntro(db)).de, "Intro de");
+  const path = await storeCover(db, new File([new Uint8Array([255, 216, 255, 224])], "test.jpg"));
+  const id = path.split("/").at(-1);
+  assert.equal((await serveCover(db, id)).status, 404);
+  assert.equal((await serveCover(db, id, true)).headers.get("content-type"), "image/jpeg");
+  await assert.rejects(storeCover(db, new File(["<svg onload=alert(1)>"], "test.svg")), RangeError);
+});
+
+test("Studio replies use the stored recipient and never send the same request twice", async (t) => {
+  const db = studioDatabase(t);
+  const id = crypto.randomUUID();
+  await db.prepare("INSERT INTO studio_messages (id,name,email,body,created_at) VALUES (?,?,?,?,?)")
+    .bind(id, "Visitor", "visitor@example.test", "Question", Date.now()).run();
+  const requestId = crypto.randomUUID();
+  const context = () => adminContext("messages", adminRequest(id, true, { studioMessages: db }), {
+    editForm(form) {
+      form.set("action", "reply"); form.set("requestId", requestId); form.set("body", "<img onerror=alert(1)>");
+      form.set("email", "untrusted@example.test");
+    },
+  });
+  const external = mockFetch(t, (url, init) => {
+    assert.equal(url.href, "https://api.resend.com/emails");
+    assert.deepEqual(JSON.parse(init.body).to, ["visitor@example.test"]);
+    assert.match(JSON.parse(init.body).html, /&lt;img/);
+    assert.equal(init.headers["Idempotency-Key"], `studio-reply/${requestId}`);
+    return Response.json({ id: "mock-email" });
+  });
+  const results = await Promise.all([messagePost(context()), messagePost(context())]);
+  assert.deepEqual(results.map((item) => new URL(item.headers.get("location"), "https://pekmen.test").searchParams.get("message")).sort(), ["accepted", "limited"]);
+  assert.equal(external.mock.callCount(), 1);
+});
+
+test("Studio Analytics reports only Cloudflare-provided visit groups", async (t) => {
+  assert.equal((await readStudioAnalytics(7)).state, "disconnected");
+  Object.assign(process.env, { STUDIO_ANALYTICS_TOKEN: "test-token", STUDIO_ANALYTICS_ACCOUNT: "a".repeat(32), STUDIO_ANALYTICS_SITE: "b".repeat(32) });
+  t.after(() => { for (const name of ["TOKEN", "ACCOUNT", "SITE"]) delete process.env[`STUDIO_ANALYTICS_${name}`]; });
+  const external = mockFetch(t, (url, init) => {
+    assert.equal(url.href, "https://api.cloudflare.com/client/v4/graphql");
+    assert.equal(init.headers.Authorization, "Bearer test-token");
+    assert.match(JSON.parse(init.body).query, /requestHost: "pekmen.net"/);
+    return Response.json({ data: { viewer: { accounts: [{
+      daily: [{ dimensions: { label: "2026-10-30" }, sum: { visits: 12 } }], pages: [], devices: null,
+    }] } } });
+  });
+  const result = await readStudioAnalytics(7);
+  assert.deepEqual(result.groups, { daily: [{ label: "2026-10-30", value: 12 }], pages: [] });
+  await readStudioAnalytics(7);
+  assert.equal(external.mock.callCount(), 1);
+});
+
 test("logout requires a valid session and CSRF token before clearing the cookie", async () => {
   const context = adminContext("logout", adminRequest("logout"));
   let deleted;
   context.cookies.delete = (name, options) => { deleted = { name, options }; };
   const invalid = adminContext("logout", adminRequest("logout"), { editForm: (form) => form.delete("csrf") });
   assert.equal((await logoutPost(invalid)).status, 403);
-  assert.equal((await logoutPost(context)).headers.get("location"), "/admin");
+  assert.equal((await logoutPost(context)).headers.get("location"), "/studio");
   assert.equal(deleted.options.path, "/");
 });
 
@@ -695,13 +794,13 @@ test("failed and uncertain moves preserve the old event and block the correct ra
   const target = "2030-01-08T10:00:00+03:00";
   const move = () => adminReschedule(adminRequest(original.id, true, locals, target));
 
-  assert.equal((await move()).headers.get("location"), "/admin?error=slot");
+  assert.equal((await move()).headers.get("location"), "/studio?error=slot");
   assert.equal(events.get(original.id), original);
   assert.equal(emails.length, 0);
 
   status = 503;
-  assert.equal((await move()).headers.get("location"), "/admin?error=booking_in_progress");
-  assert.equal((await move()).headers.get("location"), "/admin?error=booking_in_progress");
+  assert.equal((await move()).headers.get("location"), "/studio?error=booking_in_progress");
+  assert.equal((await move()).headers.get("location"), "/studio?error=booking_in_progress");
   for (const slot of [firstSlot, target]) {
     assert.equal((await postBooking(locals, slot)).status, 409);
   }
@@ -712,7 +811,7 @@ test("failed and uncertain moves preserve the old event and block the correct ra
   now = Date.parse("2030-01-08T10:41:00+03:00");
   await alarm();
   const canceled = await adminCancel(adminRequest(original.id, true, locals));
-  assert.equal(canceled.headers.get("location"), "/admin?ok=canceled&mail=1");
+  assert.equal(canceled.headers.get("location"), "/studio?ok=canceled&mail=1");
 });
 
 test("an in-flight legacy move and a create compete for the same buffered range", async (t) => {
@@ -749,8 +848,8 @@ test("an in-flight legacy move and a create compete for the same buffered range"
   } finally {
     release();
   }
-  assert.equal((await pending).headers.get("location"), "/admin?ok=rescheduled&mail=1");
-  assert.equal((await move()).headers.get("location"), "/admin?ok=rescheduled&mail=skipped");
+  assert.equal((await pending).headers.get("location"), "/studio?ok=rescheduled&mail=1");
+  assert.equal((await move()).headers.get("location"), "/studio?ok=rescheduled&mail=skipped");
   assert.equal(writes.length, 1);
   assert.equal(emails.length, 1);
   assert.equal(events.get(original.id).start.dateTime, firstSlot);

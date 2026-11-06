@@ -4,6 +4,7 @@ import type { APIContext, MiddlewareNext } from "astro";
 import { DEFAULT_LANG, isLang } from "./i18n/languages";
 import { normalisePath } from "./i18n/locale";
 import type { StudioDatabase } from "./server/studio-messages";
+import { site } from "./data/site";
 
 /**
  * English lives at the unprefixed URL; Turkish and German live under `/tr/`
@@ -24,7 +25,7 @@ const RENAMED_POSTS = new Map<string, string>([
 ]);
 
 /** Language-neutral routes that must never receive a locale prefix. */
-const NEUTRAL_ROUTES = new Set(["api", "admin"]);
+const NEUTRAL_ROUTES = new Set(["api", "admin", "studio"]);
 
 /**
  * Headers every response carries. HSTS is safe here: the site is HTTPS-only
@@ -61,13 +62,23 @@ function handle(context: APIContext, next: MiddlewareNext): Response | Promise<R
 
   const [first, ...rest] = segments;
 
+  const locale = isLang(first) ? first : null;
+  const neutralPath = locale ? rest : segments;
+  const studioRequest = neutralPath[0] === "admin" || neutralPath[0] === "studio" ||
+    (neutralPath[0] === "api" && neutralPath[1] === "admin");
+  if (studioRequest && origin !== site.url && !["localhost", "127.0.0.1", "[::1]"].includes(context.url.hostname)) {
+    return new Response("Not found", { status: 404 });
+  }
+  if (neutralPath[0] === "admin") {
+    const suffix = neutralPath.slice(1);
+    return redirectTo(`/studio${suffix.length ? "/" + (suffix.join("/") === "system" ? "settings" : suffix.join("/")) : ""}`, search, origin);
+  }
   if (NEUTRAL_ROUTES.has(first!)) return next();
 
-  const locale = isLang(first) ? first : null;
   let target = locale ? rest : segments;
   let moved = false;
 
-  // `/tr/api/...` and `/tr/admin/...` belong to the language-neutral routes.
+  // API and Studio URLs do not use the public locale prefixes.
   if (locale && NEUTRAL_ROUTES.has(target[0]!)) {
     return redirectTo(`/${rest.join("/")}`, search, origin);
   }
@@ -121,11 +132,8 @@ function handle(context: APIContext, next: MiddlewareNext): Response | Promise<R
 
 /** Admin and API responses must never be stored or indexed. */
 function isPrivate(pathname: string): boolean {
-  return (
-    pathname === "/admin" ||
-    pathname.startsWith("/admin/") ||
-    pathname.startsWith("/api/")
-  );
+  const [first, second] = pathname.split("/").filter(Boolean);
+  return NEUTRAL_ROUTES.has((isLang(first) ? second : first) ?? "");
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -148,6 +156,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (isPrivate(context.url.pathname)) {
     headers.set("Cache-Control", "no-store");
     headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+  if (context.locals.studioMessages) {
+    const segments = context.url.pathname.split("/").filter(Boolean);
+    const root = isLang(segments[0]) ? segments[1] : segments[0];
+    if (!root || ["projects", "blog", "sitemap.xml", "sitemap-index.xml", "rss.xml"].includes(root)) {
+      headers.set("Cache-Control", "no-store");
+    }
   }
 
   // 204/304 must not carry a body; passing one would throw.

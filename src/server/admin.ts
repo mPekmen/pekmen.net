@@ -56,7 +56,7 @@ export function adminCsrfToken(session: string, action: string): string {
 }
 
 export function adminBookingReturn(form: FormData): string {
-  return form.get("returnTo") === "appointments" ? "/admin/appointments" : "/admin";
+  return form.get("returnTo") === "appointments" ? "/studio/appointments" : "/studio";
 }
 
 export function verifyAdminCsrf(token: FormDataEntryValue | null, session: string, action: string): boolean {
@@ -83,7 +83,7 @@ export async function readAdminPost(
   const login = action === "login";
   const session = cookies.get(login ? ADMIN_LOGIN_COOKIE : ADMIN_COOKIE)?.value;
   if (!session || !verifySessionToken(session, login ? "login" : "session")) {
-    return redirect(`/admin?error=${login ? "csrf" : "auth"}`, 303);
+    return redirect(`/studio?error=${login ? "csrf" : "auth"}`, 303);
   }
 
   const form = await request.formData().catch(() => null);

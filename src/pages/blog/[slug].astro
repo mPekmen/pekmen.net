@@ -1,27 +1,29 @@
 ---
+import { publicPosts } from "../../server/studio-content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import L10n from "../../components/L10n.astro";
 import IconArrow from "../../components/IconArrow.astro";
-import { formatPostDate, getNextPost, getPost, posts } from "../../data/posts";
+import { formatPostDate } from "../../data/posts";
 import { site } from "../../data/site";
 import { langOf, localePath } from "../../i18n/locale";
 
+const posts = await publicPosts(Astro.locals.studioMessages);
 const lang = langOf(Astro);
-const post = getPost(Astro.params.slug ?? "");
+const post = posts.find((item) => item.slug === Astro.params.slug);
 
 if (!post) {
   Astro.response.status = 404;
   return Astro.rewrite("/404");
 }
 
-const next = getNextPost(post.slug);
+const next = posts[(posts.indexOf(post) + 1) % posts.length];
 const canonical = `${site.url}${localePath(lang, `/blog/${post.slug}/`)}`;
 
 const postSchema = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  headline: post.title.en,
-  description: post.excerpt.en,
+  headline: post.title[lang],
+  description: post.excerpt[lang],
   datePublished: post.date,
   dateModified: post.date,
   inLanguage: lang,
@@ -50,7 +52,7 @@ const dateProps = (iso: string) => ({
   <script
     slot="head"
     type="application/ld+json"
-    set:html={JSON.stringify(postSchema)}
+    set:html={JSON.stringify(postSchema).replaceAll("<", "\\u003c")}
   />
 
   <article>
@@ -95,7 +97,7 @@ const dateProps = (iso: string) => ({
     <div class="post-body">
       <div class="container">
         <div class="post-body__inner">
-          {post.body.map((paragraph) => (
+          {post.body.filter((paragraph) => paragraph[lang]).map((paragraph) => (
             <p>
               <L10n en={paragraph.en} tr={paragraph.tr} de={paragraph.de} />
             </p>
@@ -105,7 +107,7 @@ const dateProps = (iso: string) => ({
     </div>
   </article>
 
-  {posts.length > 1 && (
+  {posts.length > 1 && next && (
   <section class="post-next">
     <div class="container">
       <a class="post-next__link" href={localePath(lang, `/blog/${next.slug}`)}>

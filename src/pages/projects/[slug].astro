@@ -1,23 +1,24 @@
 ---
+import { publicProjects } from "../../server/studio-content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import L10n from "../../components/L10n.astro";
 import IconArrow from "../../components/IconArrow.astro";
 import ProjectLinks from "../../components/ProjectLinks.astro";
 import ProjectGallery from "../../components/ProjectGallery.astro";
-import { getNextProject, getProject, projects } from "../../data/projects";
 import { imageSrcSet } from "../../data/images";
 import { langOf, localePath } from "../../i18n/locale";
 import "../../styles/showcase.css";
 
+const projects = await publicProjects(Astro.locals.studioMessages);
 const lang = langOf(Astro);
-const project = getProject(Astro.params.slug ?? "");
+const project = projects.find((item) => item.slug === Astro.params.slug);
 
 if (!project) {
   Astro.response.status = 404;
   return Astro.rewrite("/404");
 }
 
-const next = getNextProject(project.slug);
+const next = projects[(projects.indexOf(project) + 1) % projects.length];
 const title = `${project.title} — Pekmen`;
 const description = project.short ?? project.summary;
 const total = String(projects.length).padStart(2, "0");

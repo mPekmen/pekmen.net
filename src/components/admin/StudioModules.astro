@@ -6,8 +6,11 @@ import { posts } from "../../data/posts";
 import { site } from "../../data/site";
 import { adminCsrfToken } from "../../server/admin";
 import { listMessages } from "../../server/studio-messages";
+import StudioContentEditor from "./StudioContentEditor.astro";
+import { listReplies } from "../../server/studio-replies";
+import { readStudioAnalytics } from "../../server/studio-analytics";
+import { isEmailConfigured } from "../../server/config";
 import type { StudioSection } from "../../server/studio";
-import manifest from "../../../package.json";
 
 interface Props { section: StudioSection; lang: Lang; session: string }
 const { section, lang, session } = Astro.props;
@@ -24,6 +27,25 @@ const time = new Intl.DateTimeFormat(lang, { dateStyle: "medium", timeStyle: "sh
 const date = new Intl.DateTimeFormat(lang, { dateStyle: "medium", timeZone: "UTC" });
 const csrf = section === "messages" && inbox ? adminCsrfToken(session, "messages") : undefined;
 const published = l("Published", "Yayında", "Veröffentlicht");
+const replies = inbox && db ? await listReplies(db, inbox.messages.map(({ id }) => id)).catch(() => null) : null;
+const replyStates = {
+  accepted: l("Accepted by Resend", "Resend kabul etti", "Von Resend angenommen"),
+  failed: l("Sending failed", "Gönderilemedi", "Versand fehlgeschlagen"),
+  unknown: l("Sending result unverified", "Gönderim sonucu doğrulanmadı", "Versandstatus ungeprüft"),
+  pending: l("Sending result pending", "Gönderim sonucu bekleniyor", "Versandstatus ausstehend"),
+  limited: l("Reply already submitted or rate limit reached.", "Yanıt zaten gönderildi veya hız sınırına ulaşıldı.", "Antwort bereits eingereicht oder Ratenlimit erreicht."),
+  invalid: l("Invalid recipient address.", "Geçersiz alıcı adresi.", "Ungültige Empfängeradresse."),
+  not_configured: l("Resend is not configured.", "Resend yapılandırılmamış.", "Resend ist nicht eingerichtet."),
+};
+const replyFeedback = messageStatus && Object.hasOwn(replyStates, messageStatus) ? replyStates[messageStatus as keyof typeof replyStates] : "";
+const days = params.get("days") === "30" ? 30 : 7;
+const analytics = section === "analytics" ? await readStudioAnalytics(days) : null;
+const reportTitles = {
+  daily: l("Daily visits", "Günlük ziyaretler", "Tägliche Besuche"),
+  pages: l("Popular pages", "Popüler sayfalar", "Beliebte Seiten"),
+  countries: l("Countries", "Ülkeler", "Länder"),
+  devices: l("Devices", "Cihazlar", "Geräte"),
+};
 ---
 
 {section === "messages" && (
@@ -40,10 +62,11 @@ const published = l("Published", "Yayında", "Veröffentlicht");
           <a class="studio-button" href="?view=archive" aria-current={archived ? "page" : undefined}>{l("Archive", "Arşiv", "Archiv")}</a>
         </nav>
         {messageStatus === "updated" && <p class="studio-empty" role="status">{l("Message updated.", "Mesaj güncellendi.", "Nachricht aktualisiert.")}</p>}
+        {replyFeedback && <p class:list={["studio-notice", messageStatus === "accepted" ? "studio-notice--good" : "studio-notice--error"]} role="status">{replyFeedback}</p>}
         {(messageStatus === "error" || messageStatus === "missing") && <p class="studio-empty" role="alert">{l("Could not update the message.", "Mesaj güncellenemedi.", "Nachricht konnte nicht aktualisiert werden.")}</p>}
         {inbox.messages.length === 0 && <p class="studio-empty">{l("No messages on this page.", "Bu sayfada mesaj yok.", "Auf dieser Seite sind keine Nachrichten.")}</p>}
         {inbox.messages.map((item) => (
-          <details class="studio-message">
+          <details class="studio-message" open={params.get("open") === item.id}>
             <summary>
               <strong>{item.name}</strong>
               <time datetime={new Date(item.created_at).toISOString()}>{time.format(item.created_at)}</time>
@@ -65,6 +88,25 @@ const published = l("Published", "Yayında", "Veröffentlicht");
                   {archived ? l("Move to inbox", "Gelen kutusuna taşı", "In den Posteingang") : l("Archive", "Arşivle", "Archivieren")}
                 </button>
               </form>
+              {replies === null && <p class="studio-muted">{l("Reply history is unavailable.", "Yanıt geçmişi okunamadı.", "Antwortverlauf nicht verfügbar.")}</p>}
+              {replies?.filter((reply) => reply.message_id === item.id).map((reply) => (
+                <article class="studio-reply">
+                  <span class="studio-status">{replyStates[reply.state]}</span>
+                  <time datetime={new Date(reply.created_at).toISOString()}>{time.format(reply.created_at)}</time>
+                  <p>{reply.body}</p>
+                </article>
+              ))}
+              {replies !== null && isEmailConfigured() && <details class="studio-editor">
+                <summary>{l("Reply", "Yanıtla", "Antworten")}</summary>
+                <form class="studio-editor-form" action="/api/admin/messages" method="post">
+                  <input type="hidden" name="csrf" value={csrf} />
+                  <input type="hidden" name="id" value={item.id} />
+                  <input type="hidden" name="view" value={archived ? "archive" : "inbox"} />
+                  <input type="hidden" name="requestId" value={crypto.randomUUID()} />
+                  <label>{l("Reply to", "Yanıtın alıcısı", "Antwort an")} {item.email}<textarea name="body" rows="5" maxlength="5000" required></textarea></label>
+                  <div><button class="studio-button studio-button--primary" name="action" value="reply">{l("Send reply", "Yanıtı gönder", "Antwort senden")}</button></div>
+                </form>
+              </details>}
             </div>
           </details>
         ))}
@@ -80,14 +122,29 @@ const published = l("Published", "Yayında", "Veröffentlicht");
   <section class="studio-card studio-module">
     <header class="studio-section-head"><div>
       <h2>Cloudflare Web Analytics</h2>
-      <p class="studio-muted">{l("Studio has no analytics data connection.", "Studio’ya bağlı bir istatistik veri kaynağı yok.", "Studio ist mit keiner Statistikdatenquelle verbunden.")}</p>
+      <p class="studio-muted">{l("Cloudflare-reported visits, in UTC. Visits are not unique people.", "Cloudflare’ın raporladığı ziyaretler, UTC. Ziyaret sayısı tekil kişi sayısı değildir.", "Von Cloudflare gemeldete Besuche, in UTC. Besuche sind keine eindeutigen Personen.")}</p>
     </div></header>
-    <p class="studio-empty">{l("Open Cloudflare to check whether Web Analytics is enabled for this site. Studio reporting requires server-side access to an analytics data source.", "Bu site için Web Analytics’in etkin olup olmadığını Cloudflare’da kontrol edin. Studio raporları için sunucu tarafında bir istatistik veri kaynağına erişim gerekir.", "Prüfen Sie in Cloudflare, ob Web Analytics für diese Website aktiviert ist. Berichte in Studio benötigen serverseitigen Zugriff auf eine Statistikdatenquelle.")}</p>
+    {analytics?.state === "disconnected" && <p class="studio-empty">{l("Studio reporting needs a server-side Analytics token and site identifiers.", "Studio raporları için sunucu tarafında Analytics belirteci ve site kimlikleri gerekir.", "Studio-Berichte benötigen ein serverseitiges Analytics-Token und Website-Kennungen.")}</p>}
+    {analytics?.state === "unavailable" && <p class="studio-empty" role="alert">{l("Analytics data is unavailable for this period.", "Bu dönem için analiz verisi okunamadı.", "Für diesen Zeitraum sind keine Analysedaten verfügbar.")}</p>}
+    {analytics?.state !== "disconnected" && <nav class="studio-module-actions" aria-label={l("Date range", "Tarih aralığı", "Zeitraum")}>
+      <a class="studio-button" href="?days=7" aria-current={days === 7 ? "page" : undefined}>{l("7 days", "7 gün", "7 Tage")}</a>
+      <a class="studio-button" href="?days=30" aria-current={days === 30 ? "page" : undefined}>{l("30 days", "30 gün", "30 Tage")}</a>
+    </nav>}
+    {analytics?.state === "ready" && (Object.keys(reportTitles) as (keyof typeof reportTitles)[]).map((group) => (
+      <section class="studio-analytics-group">
+        <h3>{reportTitles[group]}</h3>
+        {analytics.groups[group]?.length ? <div class="studio-table-wrap"><table class="studio-table">
+          <thead><tr><th scope="col">{reportTitles[group]}</th><th scope="col">{l("Visits", "Ziyaret", "Besuche")}</th></tr></thead>
+          <tbody>{analytics.groups[group].map(({ label, value }) => <tr><th scope="row">{label}</th><td>{new Intl.NumberFormat(lang).format(value)}</td></tr>)}</tbody>
+        </table></div> : <p class="studio-muted">{l("No data returned.", "Veri dönmedi.", "Keine Daten zurückgegeben.")}</p>}
+      </section>
+    ))}
     <div class="studio-module-actions"><a class="studio-button" href="https://dash.cloudflare.com/">{l("Open Cloudflare", "Cloudflare’ı aç", "Cloudflare öffnen")} ↗</a></div>
   </section>
 )}
 
-{section === "projects" && (
+{section === "projects" && <StudioContentEditor kind="project" {lang} {session} />}
+{section === "projects" && !db && (
   <section class="studio-card studio-module">
     <header class="studio-section-head"><div>
       <h2>{l("Portfolio projects", "Portfolyo projeleri", "Portfolio-Projekte")} · {projects.length}</h2>
@@ -107,7 +164,8 @@ const published = l("Published", "Yayında", "Veröffentlicht");
   </section>
 )}
 
-{section === "content" && (
+{section === "content" && <StudioContentEditor kind="post" {lang} {session} />}
+{section === "content" && !db && (
   <section class="studio-card studio-module">
     <header class="studio-section-head"><div>
       <h2>{l("Blog posts", "Blog yazıları", "Blogbeiträge")} · {posts.length}</h2>
@@ -126,6 +184,7 @@ const published = l("Published", "Yayında", "Veröffentlicht");
   </section>
 )}
 
+{section === "settings" && <StudioContentEditor kind="site" {lang} {session} />}
 {section === "settings" && (
   <section class="studio-card">
     <header class="studio-section-head"><div>
@@ -135,7 +194,7 @@ const published = l("Published", "Yayında", "Veröffentlicht");
     <dl class="studio-properties">
       <div><dt>{l("Website", "Web sitesi", "Website")}</dt><dd><a href={site.url}>pekmen.net</a></dd></div>
       <div><dt>{l("Site languages", "Site dilleri", "Sprachen")}</dt><dd>English · Türkçe · Deutsch</dd></div>
-      <div><dt>{l("Application version", "Uygulama sürümü", "Anwendungsversion")}</dt><dd>{manifest.version}</dd></div>
+      <div><dt>{l("Studio version", "Studio sürümü", "Studio-Version")}</dt><dd>1.1</dd></div>
       <div><dt>{l("Message storage", "Mesaj deposu", "Nachrichtenspeicher")}</dt><dd>{db ? l("Binding present", "Bağlantı tanımlı", "Bindung vorhanden") : l("Not connected", "Bağlı değil", "Nicht verbunden")}</dd></div>
     </dl>
   </section>

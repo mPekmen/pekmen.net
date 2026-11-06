@@ -9,7 +9,7 @@ export type EmailInput = {
   html: string;
 };
 
-export async function sendEmail(input: EmailInput): Promise<boolean> {
+export async function sendEmail(input: EmailInput, options?: { idempotencyKey: string; signal: AbortSignal }): Promise<boolean> {
   const apiKey = env("RESEND_API_KEY");
 
   if (!apiKey) {
@@ -22,7 +22,9 @@ export async function sendEmail(input: EmailInput): Promise<boolean> {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       Accept: "application/json",
+      ...(options ? { "Idempotency-Key": options.idempotencyKey } : {}),
     },
+    signal: options?.signal,
     body: JSON.stringify({
       from: input.from,
       to: [input.to],

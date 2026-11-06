@@ -425,7 +425,7 @@ export function renderOwnerNewBooking(data: BookingMail): RenderedEmail {
         "The slot is held in Google Calendar and is waiting for your confirmation.",
       rows,
       actions: [
-        { label: "Open panel", href: `${site.url}/admin` },
+        { label: "Open panel", href: `${site.url}/studio` },
         ...(data.meetLink
           ? [{ label: "Google Meet", href: data.meetLink }]
           : []),
