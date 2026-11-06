@@ -1,0 +1,53 @@
+---
+import L10n from "./L10n.astro";
+import IconArrow from "./IconArrow.astro";
+import type { Project } from "../data/projects";
+import { imageSrcSet } from "../data/images";
+import { langOf, localePath } from "../i18n/locale";
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const lang = langOf(Astro);
+const description = project.short ?? project.summary;
+---
+
+<a class="work-card" href={localePath(lang, `/projects/${project.slug}/`)}>
+  <span class="work-card__media">
+    {project.image && (
+      <img
+        src={project.image}
+        srcset={imageSrcSet(project.image)}
+        sizes="(min-width: 900px) min(46vw, 710px), 100vw"
+        alt=""
+        width="1200"
+        height="675"
+        loading="lazy"
+        decoding="async"
+      />
+    )}
+    <span class="work-card__index" aria-hidden="true">{project.index}</span>
+  </span>
+
+  <span class="work-card__body">
+    <span class="work-card__meta">
+      <span class="work-card__role">
+        <L10n {...project.category} />
+      </span>
+      <time class="work-card__year" datetime={project.year}>{project.year}</time>
+    </span>
+
+    <span class="work-card__row">
+      <h3 class="work-card__title">{project.title}</h3>
+      <span class="work-card__arrow" aria-hidden="true">
+        <IconArrow />
+      </span>
+    </span>
+
+    <span class="work-card__text">
+      <L10n en={description.en} tr={description.tr} de={description.de} />
+    </span>
+  </span>
+</a>

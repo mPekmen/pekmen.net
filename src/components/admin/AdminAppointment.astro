@@ -1,0 +1,105 @@
+---
+import type { BookingEvent } from "../../server/google";
+import { adminCsrfToken } from "../../server/admin";
+import { dateKeyInZone } from "../../server/time";
+
+interface Props {
+  booking: BookingEvent;
+  session: string;
+  timeZone: string;
+  leadHours: number;
+  compact?: boolean;
+}
+
+const { booking, session, timeZone, leadHours, compact = false } = Astro.props;
+const pending = booking.bookingStatus === "pending";
+const dateKey = dateKeyInZone(new Date(booking.start), timeZone);
+const today = dateKeyInZone(new Date(), timeZone);
+const day = new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeZone });
+const time = new Intl.DateTimeFormat("tr-TR", { timeStyle: "short", timeZone });
+const csrf = (action: string) => adminCsrfToken(session, action);
+const link = (value: string, host: string) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === host ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
+};
+const calendarLink = link(booking.htmlLink, "calendar.google.com");
+const meetLink = link(booking.meetLink, "meet.google.com");
+---
+
+<li class:list={["studio-appointment", { "studio-appointment--compact": compact }]}
+    data-appointment={compact ? undefined : booking.bookingStatus}
+    data-date-key={compact ? undefined : dateKey}>
+  <div class="studio-appointment-main">
+    <div class="studio-appointment-time">
+      <time datetime={booking.startIso}>{time.format(booking.start)}</time>
+      <span>{compact ? day.format(booking.start) : time.format(booking.end)}</span>
+    </div>
+    <div class="studio-person">
+      <strong data-booking-name>{booking.name}</strong>
+      {!compact && <a data-booking-email href={`mailto:${booking.email}`}>{booking.email}</a>}
+    </div>
+    <div class="studio-appointment-actions">
+      <span class:list={["studio-status", pending ? "studio-status--attention" : "studio-status--good"]}>
+        {pending ? "Onay bekliyor" : "Onaylandı"}
+      </span>
+      {pending && (
+        <form method="post" action="/api/admin/confirm">
+          <input type="hidden" name="csrf" value={csrf("confirm")} />
+          <input type="hidden" name="id" value={booking.id} />
+          {!compact && <input type="hidden" name="returnTo" value="appointments" />}
+          <button class="studio-button studio-button--primary" type="submit" aria-label={`${booking.name} randevusunu onayla`}>Onayla</button>
+        </form>
+      )}
+    </div>
+  </div>
+
+  {!compact && (
+    <details class="studio-appointment-details" data-booking-editor>
+      <summary aria-label={`${booking.name} randevu ayrıntıları`}>Ayrıntılar ve işlemler</summary>
+      <div class="studio-detail-content">
+        {booking.note && <p class="studio-booking-note">{booking.note}</p>}
+        <div class="studio-links">
+          {calendarLink && <a href={calendarLink} target="_blank" rel="noopener noreferrer">Google Takvim ↗</a>}
+          {meetLink && <a href={meetLink} target="_blank" rel="noopener noreferrer">Google Meet ↗</a>}
+        </div>
+        <details class="studio-editor" data-booking-editor>
+          <summary>Tarihi değiştir</summary>
+          <form class="studio-editor-form" method="post" action="/api/admin/reschedule" data-reschedule>
+            <input type="hidden" name="csrf" value={csrf("reschedule")} />
+            <input type="hidden" name="id" value={booking.id} />
+            <input type="hidden" name="returnTo" value="appointments" />
+            <input type="hidden" name="requestId" value={crypto.randomUUID()} />
+            <div class="studio-form-grid">
+              <label>Tarih<input type="date" name="date" value={dateKey} min={today} data-date required /></label>
+              <label>Saat<select name="start" data-slots disabled required><option value="">Tarih seçin</option></select></label>
+            </div>
+            <label>Katılımcıya not (isteğe bağlı)<textarea name="message" rows="2" maxlength="500"></textarea></label>
+            <div class="studio-editor-actions">
+              <button class="studio-button studio-button--primary" type="submit" data-submit disabled>Yeni saati gönder</button>
+              <span class="studio-muted" data-hint role="status">{leadHours > 0 ? `En az ${leadHours} saat sonraki uygun saatler listelenir.` : "Müsait saatler listelenir."}</span>
+            </div>
+          </form>
+        </details>
+        <details class="studio-editor studio-editor--danger" data-booking-editor>
+          <summary>İptal et</summary>
+          <form class="studio-editor-form" method="post" action="/api/admin/cancel">
+            <input type="hidden" name="csrf" value={csrf("cancel")} />
+            <input type="hidden" name="id" value={booking.id} />
+            <input type="hidden" name="returnTo" value="appointments" />
+            <p><strong>{booking.name}</strong> · {day.format(booking.start)} · {time.format(booking.start)} ({timeZone})</p>
+            <p>Randevu takvimden kaldırılır ve katılımcıya bildirim gönderilmeye çalışılır.</p>
+            <div class="studio-editor-actions">
+              <button class="studio-button" type="button" data-dismiss-cancel>Vazgeç</button>
+              <button class="studio-button studio-button--danger" type="submit"
+                name="confirm" value={csrf(`cancel-confirm:${booking.id}`)}>İptali onayla</button>
+            </div>
+          </form>
+        </details>
+      </div>
+    </details>
+  )}
+</li>

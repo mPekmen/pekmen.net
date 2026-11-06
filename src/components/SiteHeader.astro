@@ -1,0 +1,205 @@
+---
+import L10n from "./L10n.astro";
+import LangSwitch from "./LangSwitch.astro";
+import IconArrow from "./IconArrow.astro";
+import { site } from "../data/site";
+import { langOf, localePath, pathOf } from "../i18n/locale";
+
+const lang = langOf(Astro);
+const path = pathOf(Astro).replace(/\/+$/, "") || "/";
+const workActive = path === "/projects" || path.startsWith("/projects/");
+const blogActive = path === "/blog" || path.startsWith("/blog/");
+const aboutActive = path === "/about" || path.startsWith("/about/");
+const contactActive = path === "/contact";
+const bookingActive = path === "/appointment";
+---
+
+<header class="site-header" data-header>
+  <div class="container site-header__inner">
+    <a class="brand" href={localePath(lang, "/")} aria-label={`${site.name} — home`}>
+      {site.name}<span class="brand__dot" aria-hidden="true">.</span>
+    </a>
+
+    <nav class="site-nav" aria-label="Primary">
+      <a
+        class="site-nav__link"
+        href={localePath(lang, "/projects")}
+        aria-current={workActive ? "page" : undefined}
+      >
+        <span class="site-nav__label">
+          <L10n en="Work" tr="Projeler" de="Arbeiten" />
+        </span>
+      </a>
+      <a
+        class="site-nav__link"
+        href={localePath(lang, "/blog")}
+        aria-current={blogActive ? "page" : undefined}
+      >
+        <span class="site-nav__label">
+          <L10n en="Writing" tr="Yazılar" de="Notizen" />
+        </span>
+      </a>
+      <a
+        class="site-nav__link"
+        href={localePath(lang, "/about")}
+        aria-current={aboutActive ? "page" : undefined}
+      >
+        <span class="site-nav__label">
+          <L10n en="About" tr="Hakkında" de="Über" />
+        </span>
+      </a>
+      <a
+        class="site-nav__link"
+        href={localePath(lang, "/contact")}
+        aria-current={contactActive ? "page" : undefined}
+      >
+        <span class="site-nav__label">
+          <L10n en="Contact" tr="İletişim" de="Kontakt" />
+        </span>
+      </a>
+    </nav>
+
+    <div class="header__actions">
+      <LangSwitch class="lang lang--header" />
+
+      <a
+        class="header__cta"
+        href={localePath(lang, "/appointment")}
+        aria-current={bookingActive ? "page" : undefined}
+      >
+        <L10n en="Book a call" tr="Randevu al" de="Termin buchen" />
+        <IconArrow />
+      </a>
+
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        data-menu-toggle
+      >
+        <span class="menu-toggle__label">
+          <L10n en="Menu" tr="Menü" de="Menü" />
+        </span>
+        <span class="menu-toggle__icon" aria-hidden="true">
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="menu" id="mobile-menu" data-menu hidden>
+  <nav class="menu__nav" aria-label="Mobile">
+    <a class="menu__link" href={localePath(lang, "/projects")} aria-current={workActive ? "page" : undefined}>
+      <span class="menu__index" aria-hidden="true">01</span>
+      <span class="menu__label">
+        <L10n en="Work" tr="Projeler" de="Arbeiten" />
+      </span>
+      <IconArrow class="menu__arrow" />
+    </a>
+    <a class="menu__link" href={localePath(lang, "/blog")} aria-current={blogActive ? "page" : undefined}>
+      <span class="menu__index" aria-hidden="true">02</span>
+      <span class="menu__label">
+        <L10n en="Writing" tr="Yazılar" de="Notizen" />
+      </span>
+      <IconArrow class="menu__arrow" />
+    </a>
+    <a class="menu__link" href={localePath(lang, "/about")} aria-current={aboutActive ? "page" : undefined}>
+      <span class="menu__index" aria-hidden="true">03</span>
+      <span class="menu__label">
+        <L10n en="About" tr="Hakkında" de="Über" />
+      </span>
+      <IconArrow class="menu__arrow" />
+    </a>
+    <a class="menu__link" href={localePath(lang, "/contact")} aria-current={contactActive ? "page" : undefined}>
+      <span class="menu__index" aria-hidden="true">04</span>
+      <span class="menu__label">
+        <L10n en="Contact" tr="İletişim" de="Kontakt" />
+      </span>
+      <IconArrow class="menu__arrow" />
+    </a>
+    <a class="menu__link" href={localePath(lang, "/appointment")} aria-current={bookingActive ? "page" : undefined}>
+      <span class="menu__index" aria-hidden="true">05</span>
+      <span class="menu__label">
+        <L10n en="Book a call" tr="Randevu al" de="Termin buchen" />
+      </span>
+      <IconArrow class="menu__arrow" />
+    </a>
+  </nav>
+
+  <div class="menu__foot">
+    <a class="menu__mail" href={`mailto:${site.email}`}>{site.email}</a>
+
+    <div class="menu__meta">
+      <span>{site.locationShort}</span>
+      <time class="menu__clock" data-clock datetime="">--:--</time>
+      <LangSwitch class="lang menu__lang" />
+    </div>
+  </div>
+</div>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>("[data-menu-toggle]");
+  const menu = document.querySelector<HTMLElement>("[data-menu]");
+
+  if (toggle && menu) {
+    let closeTimer: number | undefined;
+
+    const setOpen = (open: boolean) => {
+      window.clearTimeout(closeTimer);
+      toggle.setAttribute("aria-expanded", String(open));
+      document.documentElement.classList.toggle("menu-open", open);
+
+      if (open) {
+        menu.hidden = false;
+        // Wait for the next frame instead of reading offsetWidth, which would
+        // force a synchronous layout on every menu open.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => menu.classList.add("is-open"));
+        });
+        menu.querySelector<HTMLAnchorElement>("a")?.focus();
+      } else {
+        menu.classList.remove("is-open");
+        closeTimer = window.setTimeout(() => {
+          menu.hidden = true;
+        }, 300);
+      }
+    };
+
+    toggle.addEventListener("click", () => {
+      setOpen(toggle.getAttribute("aria-expanded") !== "true");
+    });
+
+    menu.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => setOpen(false));
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 900 && toggle.getAttribute("aria-expanded") === "true") {
+        setOpen(false);
+      }
+    });
+  }
+
+  const header = document.querySelector<HTMLElement>("[data-header]");
+
+  if (header) {
+    const onScroll = () => {
+      header.classList.toggle("is-stuck", window.scrollY > 8);
+    };
+
+    // Run after the document has laid out so the first scroll read does not
+    // force a reflow while the page is still parsing.
+    requestAnimationFrame(onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
+</script>

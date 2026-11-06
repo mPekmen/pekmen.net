@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Pekmen — web interfaces, backend systems, everything between">
+  <rect width="1200" height="630" fill="#004f36"/>
+
+  <g stroke="#f5f2eb" stroke-opacity="0.14" stroke-width="1">
+    <path d="M80 0v630M180 0v630M280 0v630M380 0v630M480 0v630M580 0v630M680 0v630M780 0v630M880 0v630M980 0v630M1080 0v630"/>
+  </g>
+
+  <g fill="#f5f2eb" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+    <text x="80" y="90" font-size="20" font-weight="500" letter-spacing="4">PEKMEN</text>
+    <text x="1120" y="90" font-size="20" font-weight="500" letter-spacing="4" text-anchor="end">PORTFOLIO — 2026</text>
+
+    <text x="76" y="282" font-size="96" font-weight="500" letter-spacing="-2">Web interfaces.</text>
+    <text x="76" y="392" font-size="96" font-weight="500" letter-spacing="-2">Backend systems.</text>
+    <text x="76" y="502" font-size="96" font-weight="500" letter-spacing="-2" fill-opacity="0.62">Everything between.</text>
+
+    <text x="80" y="585" font-size="18" font-weight="500" letter-spacing="3">FULL-STACK DEVELOPER</text>
+    <text x="1120" y="585" font-size="18" font-weight="500" letter-spacing="3" text-anchor="end">PEKMEN.NET</text>
+  </g>
+
+  <path d="M80 110h1040" stroke="#f5f2eb" stroke-opacity="0.28"/>
+  <path d="M80 548h1040" stroke="#f5f2eb" stroke-opacity="0.28"/>
+</svg>

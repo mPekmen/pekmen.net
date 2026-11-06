@@ -1,0 +1,210 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import L10n from "../components/L10n.astro";
+import { site } from "../data/site";
+
+const sections = [
+  { id: "controller", label: { en: "Who runs this", tr: "Sitenin sahibi", de: "Verantwortlich" } },
+  { id: "data", label: { en: "What is collected", tr: "Toplanan veriler", de: "Welche Daten" } },
+  { id: "purpose", label: { en: "Why", tr: "Neden", de: "Zweck" } },
+  { id: "processors", label: { en: "Who processes it", tr: "Kimler işliyor", de: "Empfänger" } },
+  { id: "retention", label: { en: "How long", tr: "Saklama süresi", de: "Speicherdauer" } },
+  { id: "rights", label: { en: "Your rights", tr: "Haklarınız", de: "Ihre Rechte" } },
+  { id: "changes", label: { en: "Changes", tr: "Değişiklikler", de: "Änderungen" } },
+];
+---
+
+<BaseLayout
+  title="Privacy — Pekmen"
+  titleTr="Gizlilik — Pekmen"
+  titleDe="Datenschutz — Pekmen"
+  description="How Pekmen handles the information you send through the contact form and the appointment scheduler."
+  descriptionTr="Pekmen'in iletişim formu ve randevu sistemi üzerinden gönderdiğiniz bilgileri nasıl işlediği."
+  descriptionDe="Wie Pekmen mit den Daten umgeht, die Sie über das Kontaktformular und die Terminbuchung senden."
+>
+  <section class="page-head">
+    <div class="container">
+      <div class="page-head__top">
+        <span class="label">(Privacy)</span>
+        <span class="label label--muted">
+          <L10n en="Updated 30 Oct 2026" tr="30 Eki 2026" de="Stand 30. Okt 2026" />
+        </span>
+      </div>
+
+      <div class="page-head__row">
+        <h1><L10n en="Privacy." tr="Gizlilik." de="Datenschutz." /></h1>
+
+        <div class="page-head__aside">
+          <p class="page-head__intro">
+            <L10n
+              en="Short version: your message goes to my inbox, a booking goes to my calendar, and nothing is sold, profiled or tracked. The details are below."
+              tr="Kısa hâli: mesajınız doğrudan bana gelir, randevu takvimime yazılır; hiçbir veri satılmaz, profillenmez, izlenmez. Ayrıntılar aşağıda."
+              de="Kurzfassung: Ihre Nachricht landet in meinem Postfach, eine Buchung in meinem Kalender. Nichts wird verkauft, profiliert oder getrackt. Details unten."
+            />
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="legal">
+    <div class="container legal__grid">
+      <nav class="legal__toc" aria-label="Sections">
+        {sections.map((section) => (
+          <a href={`#${section.id}`}>
+            <L10n en={section.label.en} tr={section.label.tr} de={section.label.de} />
+          </a>
+        ))}
+      </nav>
+
+      <div class="legal__body">
+        <section id="controller">
+          <h2><L10n en="Who runs this site" tr="Sitenin sahibi" de="Verantwortlich" /></h2>
+          <p>
+            <L10n
+              en={`This site is run by Pekmen, an independent developer based in İstanbul. The responsible party for data processed here can be reached at ${site.email}.`}
+              tr={`Bu site, İstanbul'da çalışan bağımsız bir geliştirici olan Pekmen tarafından işletiliyor. Burada işlenen verilerden sorumlu tarafa ${site.email} adresinden ulaşabilirsiniz.`}
+              de={`Diese Website wird von Pekmen betrieben, einem unabhängigen Entwickler in Istanbul. Die verantwortliche Stelle ist unter ${site.email} erreichbar.`}
+            />
+          </p>
+        </section>
+
+        <section id="data">
+          <h2><L10n en="What is collected" tr="Hangi veriler toplanıyor" de="Welche Daten erhoben werden" /></h2>
+          <p>
+            <L10n
+              en="Only what you type or what a request needs to work — nothing else:"
+              tr="Yalnızca sizin yazdıklarınız ve bir isteğin çalışması için gereken teknik bilgiler:"
+              de="Nur das, was Sie eingeben, und was eine Anfrage technisch braucht:"
+            />
+          </p>
+          <ul>
+            <li>
+              <L10n
+                en="Contact form: name, email address and your message."
+                tr="İletişim formu: adınız, e-posta adresiniz ve mesajınız."
+                de="Kontaktformular: Name, E-Mail-Adresse und Ihre Nachricht."
+              />
+            </li>
+            <li>
+              <L10n
+                en="Appointment: name, email address, an optional note and the time slot you pick."
+                tr="Randevu: adınız, e-posta adresiniz, isteğe bağlı notunuz ve seçtiğiniz saat."
+                de="Terminbuchung: Name, E-Mail-Adresse, optional eine Notiz und der gewählte Zeitpunkt."
+              />
+            </li>
+            <li>
+              <L10n
+                en="Server-side: your IP address, read only to rate-limit abuse. It is kept in memory and never written to a database."
+                tr="Sunucu tarafı: yalnızca kötüye kullanımı sınırlamak için okunan IP adresiniz. Bellekte tutulur, hiçbir veritabanına yazılmaz."
+                de="Serverseitig: Ihre IP-Adresse, ausschließlich zur Begrenzung von Missbrauch. Sie bleibt im Arbeitsspeicher und wird nie in einer Datenbank gespeichert."
+              />
+            </li>
+            <li>
+              <L10n
+                en="Language preference: stored in your browser's local storage, so the site opens in the language you chose. It stays on your device."
+                tr="Dil tercihi: sitenin seçtiğiniz dilde açılması için tarayıcınızın yerel depolamasında tutulur. Cihazınızdan çıkmaz."
+                de="Sprachauswahl: im lokalen Speicher Ihres Browsers, damit die Website in Ihrer Sprache öffnet. Sie verlässt Ihr Gerät nicht."
+              />
+            </li>
+          </ul>
+          <p>
+            <L10n
+              en="There are no analytics scripts, no advertising pixels, no tracking cookies and no third-party embeds on this site."
+              tr="Sitede analiz betiği, reklam pikseli, takip çerezi veya üçüncü taraf gömme içerik yok."
+              de="Es gibt keine Analyse-Skripte, keine Werbe-Pixel, keine Tracking-Cookies und keine eingebetteten Drittanbieter-Inhalte."
+            />
+          </p>
+        </section>
+
+        <section id="purpose">
+          <h2><L10n en="Why it is processed" tr="Neden işleniyor" de="Zweck der Verarbeitung" /></h2>
+          <p>
+            <L10n
+              en="Your details are used to answer your message and, if you book a call, to create the meeting, send you the invitation and the Google Meet link, and prepare for the conversation. The legal basis is the performance of a pre-contractual relationship and my legitimate interest in replying to enquiries. Your data is never used for advertising."
+              tr="Bilgileriniz mesajınızı yanıtlamak; randevu alırsanız görüşmeyi oluşturmak, size daveti ve Google Meet bağlantısını göndermek ve görüşmeye hazırlanmak için kullanılır. Hukuki dayanak, sözleşme öncesi ilişkinin yürütülmesi ve gelen talepleri yanıtlama konusundaki meşru menfaatimdir. Verileriniz reklam amacıyla hiç kullanılmaz."
+              de="Ihre Angaben dienen dazu, Ihre Nachricht zu beantworten und — bei einer Buchung — das Gespräch anzulegen, Ihnen Einladung und Google-Meet-Link zu senden und mich darauf vorzubereiten. Rechtsgrundlage ist die Durchführung eines vorvertraglichen Verhältnisses sowie mein berechtigtes Interesse an der Beantwortung von Anfragen. Ihre Daten werden nie für Werbung verwendet."
+            />
+          </p>
+        </section>
+
+        <section id="processors">
+          <h2><L10n en="Who else sees it" tr="Verileri kimler görüyor" de="Empfänger der Daten" /></h2>
+          <p>
+            <L10n
+              en="Only the services needed to deliver your message or your booking, each limited to that job:"
+              tr="Yalnızca mesajınızı veya randevunuzu iletmek için gereken servisler; her biri kendi işiyle sınırlı:"
+              de="Nur die Dienste, die für Zustellung Ihrer Nachricht oder Buchung nötig sind, jeweils darauf beschränkt:"
+            />
+          </p>
+          <ul>
+            <li>
+              <L10n
+                en="Resend — delivers the contact form email to my inbox."
+                tr="Resend — iletişim formu e-postasını gelen kutuma iletir."
+                de="Resend — stellt die Formular-E-Mail in meinem Postfach zu."
+              />
+            </li>
+            <li>
+              <L10n
+                en="Google Calendar — stores the appointment, sends you the invitation and creates the Meet link."
+                tr="Google Calendar — randevuyu kaydeder, daveti gönderir ve Meet bağlantısını oluşturur."
+                de="Google Calendar — speichert den Termin, versendet die Einladung und erzeugt den Meet-Link."
+              />
+            </li>
+            <li>
+              <L10n
+                en="The hosting provider that serves these pages and runs the booking API."
+                tr="Bu sayfaları sunan ve randevu API'sini çalıştıran barındırma sağlayıcısı."
+                de="Der Hosting-Anbieter, der diese Seiten ausliefert und die Buchungs-API betreibt."
+              />
+            </li>
+          </ul>
+          <p>
+            <L10n
+              en="None of them receive more than the fields above, and nothing is shared for marketing or profiling."
+              tr="Hiçbirine yukarıdaki alanlardan fazlası aktarılmaz; pazarlama veya profilleme amacıyla paylaşım yapılmaz."
+              de="Keiner dieser Dienste erhält mehr als die genannten Felder; eine Weitergabe zu Marketing- oder Profilingzwecken findet nicht statt."
+            />
+          </p>
+        </section>
+
+        <section id="retention">
+          <h2><L10n en="How long it is kept" tr="Ne kadar saklanıyor" de="Speicherdauer" /></h2>
+          <p>
+            <L10n
+              en="Messages are kept for up to twelve months after our conversation ends, then deleted. Bookings stay in my calendar as part of its normal history; you can ask me to delete one at any time. Rate-limit counters live only in server memory and disappear on restart."
+              tr="Mesajlar görüşmemiz bittikten sonra en fazla on iki ay saklanır, ardından silinir. Randevular takvimin olağan geçmişinin parçası olarak kalır; dilediğiniz an silmemi isteyebilirsiniz. Hız sınırı sayaçları yalnızca sunucu belleğinde tutulur ve yeniden başlatmada kaybolur."
+              de="Nachrichten werden nach Abschluss unseres Austauschs höchstens zwölf Monate aufbewahrt und dann gelöscht. Buchungen bleiben als Teil der üblichen Kalenderhistorie bestehen; Sie können jederzeit die Löschung verlangen. Zähler zur Ratenbegrenzung liegen nur im Arbeitsspeicher und verschwinden beim Neustart."
+            />
+          </p>
+        </section>
+
+        <section id="rights">
+          <h2><L10n en="Your rights" tr="Haklarınız" de="Ihre Rechte" /></h2>
+          <p>
+            <L10n
+              en="You can ask what is stored about you, have it corrected, have it deleted, or object to its processing. Write to contact@pekmen.net and I will answer within thirty days. If you are in Türkiye you may also complain to the KVKK; elsewhere, to your national data protection authority."
+              tr="Hakkınızda hangi verilerin saklandığını öğrenebilir, düzeltilmesini, silinmesini veya işlenmesine itiraz edilmesini isteyebilirsiniz. contact@pekmen.net adresine yazın; otuz gün içinde yanıtlarım. Türkiye'deyseniz KVKK'ya, diğer ülkelerde ulusal veri koruma kurumunuza da başvurabilirsiniz."
+              de="Sie können Auskunft über die zu Ihnen gespeicherten Daten verlangen, deren Berichtigung oder Löschung verlangen oder der Verarbeitung widersprechen. Schreiben Sie an contact@pekmen.net; ich antworte innerhalb von dreißig Tagen. In der Türkei können Sie sich zudem an die KVKK wenden, andernorts an Ihre nationale Datenschutzaufsicht."
+            />
+          </p>
+          <p>
+            <a class="legal__mail" href={`mailto:${site.email}`}>{site.email}</a>
+          </p>
+        </section>
+
+        <section id="changes">
+          <h2><L10n en="Changes" tr="Değişiklikler" de="Änderungen" /></h2>
+          <p>
+            <L10n
+              en="If the way this site handles data changes — for example when a new integration is added — this page is updated and the date at the top changes. It was last revised on 30 October 2026."
+              tr="Sitenin veri işleme biçimi değişirse — örneğin yeni bir entegrasyon eklendiğinde — bu sayfa güncellenir ve üstteki tarih değişir. Son güncelleme: 30 Ekim 2026."
+              de="Ändert sich der Umgang mit Daten — etwa durch eine neue Integration —, wird diese Seite aktualisiert und das Datum oben angepasst. Letzte Überarbeitung: 30. Oktober 2026."
+            />
+          </p>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

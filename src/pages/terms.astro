@@ -1,0 +1,150 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import L10n from "../components/L10n.astro";
+import { site } from "../data/site";
+
+const sections = [
+  { id: "scope", label: { en: "What this covers", tr: "Kapsam", de: "Geltungsbereich" } },
+  { id: "use", label: { en: "Using the site", tr: "Siteyi kullanmak", de: "Nutzung" } },
+  { id: "calls", label: { en: "Calls and bookings", tr: "Randevular", de: "Termine" } },
+  { id: "content", label: { en: "Content and credit", tr: "İçerik ve telif", de: "Inhalte und Rechte" } },
+  { id: "liability", label: { en: "Liability", tr: "Sorumluluk", de: "Haftung" } },
+  { id: "changes", label: { en: "Changes", tr: "Değişiklikler", de: "Änderungen" } },
+  { id: "contact", label: { en: "Contact", tr: "İletişim", de: "Kontakt" } },
+];
+---
+
+<BaseLayout
+  title="Terms — Pekmen"
+  titleTr="Koşullar — Pekmen"
+  titleDe="Nutzungsbedingungen — Pekmen"
+  description="The short rules for using pekmen.net, booking a call and reusing what is published here."
+  descriptionTr="pekmen.net'i kullanmak, randevu almak ve burada yayımlananları kullanmak için kısa kurallar."
+  descriptionDe="Die kurzen Regeln für die Nutzung von pekmen.net, die Buchung eines Termins und die Verwendung der Inhalte."
+>
+  <section class="page-head">
+    <div class="container">
+      <div class="page-head__top">
+        <span class="label">(Terms)</span>
+        <span class="label label--muted">
+          <L10n en="Updated 31 Oct 2026" tr="31 Eki 2026" de="Stand 31. Okt 2026" />
+        </span>
+      </div>
+
+      <div class="page-head__row">
+        <h1><L10n en="Terms." tr="Koşullar." de="Bedingungen." /></h1>
+
+        <div class="page-head__aside">
+          <p class="page-head__intro">
+            <L10n
+              en="Short version: read what is here, write to me, book a call if you want one. Nothing is sold on this site, and nothing here is a contract until we both sign one."
+              tr="Kısa hâli: buradakileri okuyabilir, bana yazabilir, istersen görüşme ayarlayabilirsin. Bu sitede bir şey satılmıyor ve ikimiz imzalamadıkça buradaki hiçbir şey sözleşme sayılmaz."
+              de="Kurzfassung: Lesen, schreiben, bei Bedarf ein Gespräch buchen. Auf dieser Seite wird nichts verkauft, und nichts hier ist ein Vertrag, solange nicht beide Seiten einen unterschreiben."
+            />
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="legal">
+    <div class="container legal__grid">
+      <nav class="legal__toc" aria-label="Sections">
+        {sections.map((section) => (
+          <a href={`#${section.id}`}>
+            <L10n en={section.label.en} tr={section.label.tr} de={section.label.de} />
+          </a>
+        ))}
+      </nav>
+
+      <div class="legal__body">
+        <section id="scope">
+          <h2><L10n en="What this covers" tr="Kapsam" de="Geltungsbereich" /></h2>
+          <p>
+            <L10n
+              en={`These terms apply to pekmen.net, a personal site run by Pekmen, an independent developer based in İstanbul. They cover reading the site, writing through the contact form and booking an introductory call. They do not cover barberapp.tech or any other product of mine; those have their own terms.`}
+              tr={`Bu koşullar, İstanbul'da çalışan bağımsız bir geliştirici olan Pekmen'in kişisel sitesi pekmen.net için geçerli. Siteyi okumayı, iletişim formundan yazmayı ve tanışma görüşmesi ayarlamayı kapsıyor. barberapp.tech veya diğer ürünlerim bu kapsamda değil; onların kendi koşulları var.`}
+              de={`Diese Bedingungen gelten für pekmen.net, die persönliche Website von Pekmen, einem unabhängigen Entwickler in Istanbul. Sie betreffen das Lesen der Seite, Nachrichten über das Kontaktformular und die Buchung eines Kennenlerngesprächs. Für barberapp.tech und andere Produkte gelten eigene Bedingungen.`}
+            />
+          </p>
+        </section>
+
+        <section id="use">
+          <h2><L10n en="Using the site" tr="Siteyi kullanmak" de="Nutzung der Seite" /></h2>
+          <p>
+            <L10n
+              en="You are welcome to read, quote and link to anything here. What I ask in return is simple: do not attack the server, do not send automated bulk requests, do not use the contact form for advertising, and do not present my work as your own."
+              tr="Buradaki her şeyi okuman, alıntılaman ve bağlantı vermen serbest. Karşılığında istediğim basit: sunucuya saldırı yapmayın, otomatik toplu istek göndermeyin, iletişim formunu reklam için kullanmayın ve işlerimi kendi işiniz gibi göstermeyin."
+              de="Lesen, zitieren und verlinken ist ausdrücklich erlaubt. Im Gegenzug gilt: keine Angriffe auf den Server, keine automatisierten Massenanfragen, kein Werbeeinsatz des Kontaktformulars und keine Präsentation meiner Arbeiten als eigene."
+            />
+          </p>
+        </section>
+
+        <section id="calls">
+          <h2><L10n en="Calls and bookings" tr="Randevular" de="Termine" /></h2>
+          <p>
+            <L10n
+              en="The call you can book here is a free, thirty-minute conversation: you describe the work, I say whether I can help and what it would take. Booking it does not create a contract or a reservation of my time beyond that slot. If you need to move or cancel, write to me; a day's notice is enough."
+              tr="Buradan alabileceğiniz görüşme, ücretsiz ve otuz dakikalık bir tanışma: siz işi anlatırsınız, ben yardımcı olup olamayacağımı ve ne gerektiğini söylerim. Randevu almak, o saat dışında bir sözleşme veya zaman ayırma taahhüdü doğurmaz. Ertelemek veya iptal etmek isterseniz bana yazın; bir gün öncesinden haber vermeniz yeterli."
+              de="Der buchbare Termin ist ein kostenloses, dreißigminütiges Gespräch: Sie schildern das Vorhaben, ich sage, ob ich helfen kann und was es braucht. Die Buchung begründet keinen Vertrag und keine Reservierung meiner Zeit über diesen Slot hinaus. Verschieben oder stornieren: kurz schreiben, ein Tag Vorlauf genügt."
+            />
+          </p>
+          <p>
+            <L10n
+              en="The meeting happens on Google Meet. The invitation goes to the address you enter, so please use one you actually read."
+              tr="Görüşme Google Meet üzerinden yapılır. Davet, girdiğiniz adrese gider; gerçekten okuduğunuz bir adres kullanın."
+              de="Das Gespräch findet über Google Meet statt. Die Einladung geht an die angegebene Adresse — bitte eine verwenden, die Sie tatsächlich lesen."
+            />
+          </p>
+        </section>
+
+        <section id="content">
+          <h2><L10n en="Content and credit" tr="İçerik ve telif" de="Inhalte und Rechte" /></h2>
+          <p>
+            <L10n
+              en="The text, layout and code of this site are mine. Screenshots of client work — BarBer and boyacı.net — show products that belong to their owners, and I publish them with permission; use them only with that owner's consent. If you quote me, a link back is enough."
+              tr="Bu sitenin metni, düzeni ve kodu bana ait. Müşteri işlerinin ekran görüntüleri — BarBer ve boyacı.net — sahiplerine ait ürünleri gösteriyor ve izinle yayımlanıyor; onları yalnızca ilgili sahibin onayıyla kullanın. Benden alıntı yaparsanız bağlantı vermeniz yeterli."
+              de="Text, Layout und Code dieser Seite stammen von mir. Screenshots von Kundenarbeiten — BarBer und boyacı.net — zeigen Produkte ihrer Eigentümer und werden mit Erlaubnis veröffentlicht; eine Verwendung bedarf deren Zustimmung. Bei Zitaten genügt ein Link zurück."
+            />
+          </p>
+        </section>
+
+        <section id="liability">
+          <h2><L10n en="Liability" tr="Sorumluluk" de="Haftung" /></h2>
+          <p>
+            <L10n
+              en="The site is provided as it is. I keep it accurate and online, but I cannot promise it will always be available or free of mistakes, and I am not liable for decisions taken solely on what is written here. Links to other sites lead somewhere I do not control."
+              tr="Site olduğu gibi sunuluyor. Doğru ve erişilebilir tutmaya çalışıyorum; ancak her zaman açık olacağını veya hatasız olacağını garanti edemem ve yalnızca burada yazılanlara dayanarak alınan kararlardan sorumlu değilim. Başka sitelere verilen bağlantılar, kontrolümde olmayan yerlere gider."
+              de="Die Seite wird so bereitgestellt, wie sie ist. Ich halte sie aktuell und erreichbar, kann aber weder ständige Verfügbarkeit noch Fehlerfreiheit versprechen und hafte nicht für Entscheidungen, die allein auf diesen Texten beruhen. Links führen zu Orten, die ich nicht kontrolliere."
+            />
+          </p>
+        </section>
+
+        <section id="changes">
+          <h2><L10n en="Changes" tr="Değişiklikler" de="Änderungen" /></h2>
+          <p>
+            <L10n
+              en="If these rules change — for example when a new service is added — this page is updated and the date at the top changes. The Turkish version is the reference; the English and German texts are translations."
+              tr="Bu kurallar değişirse — örneğin yeni bir hizmet eklendiğinde — bu sayfa güncellenir ve üstteki tarih değişir. Geçerli metin Türkçe olanıdır; İngilizce ve Almanca çeviridir."
+              de="Ändern sich diese Regeln — etwa durch einen neuen Dienst —, wird diese Seite aktualisiert und das Datum oben angepasst. Maßgeblich ist der türkische Text; Englisch und Deutsch sind Übersetzungen."
+            />
+          </p>
+        </section>
+
+        <section id="contact">
+          <h2><L10n en="Contact" tr="İletişim" de="Kontakt" /></h2>
+          <p>
+            <L10n
+              en="Questions about these terms, or about anything published here, go to the address below. I answer within a few days."
+              tr="Bu koşullar veya burada yayımlananlar hakkındaki sorularınız için aşağıdaki adrese yazın. Birkaç gün içinde yanıtlarım."
+              de="Fragen zu diesen Bedingungen oder zu veröffentlichten Inhalten richten Sie an die Adresse unten. Ich antworte innerhalb weniger Tage."
+            />
+          </p>
+          <p>
+            <a class="legal__mail" href={`mailto:${site.email}`}>{site.email}</a>
+          </p>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

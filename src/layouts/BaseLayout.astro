@@ -1,0 +1,167 @@
+---
+import "@fontsource-variable/inter-tight";
+import latinFont from "@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2?url";
+import latinExtFont from "@fontsource-variable/inter-tight/files/inter-tight-latin-ext-wght-normal.woff2?url";
+import "../styles/global.css";
+import SiteHeader from "../components/SiteHeader.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import L10n from "../components/L10n.astro";
+import { site } from "../data/site";
+import { alternates, canonicalUrl, langOf, pathOf } from "../i18n/locale";
+
+interface Props {
+  title: string;
+  titleTr: string;
+  titleDe: string;
+  description: string;
+  descriptionTr: string;
+  descriptionDe: string;
+  image?: string;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  titleTr,
+  titleDe,
+  description,
+  descriptionTr,
+  descriptionDe,
+  image = "/og.png",
+  noindex = false,
+} = Astro.props;
+
+const origin = Astro.site ?? site.url;
+const lang = langOf(Astro);
+const path = pathOf(Astro);
+
+const pageTitle = lang === "tr" ? titleTr : lang === "de" ? titleDe : title;
+const pageDescription =
+  lang === "tr" ? descriptionTr : lang === "de" ? descriptionDe : description;
+
+const canonical = canonicalUrl(origin.toString(), lang, path);
+const ogImage = new URL(image, origin);
+// Turkish needs the extended Latin subset (ı, ş, ğ); English and German fit
+// in the smaller Latin file. Preload only the one the page will actually use.
+const preloadFont = lang === "tr" ? latinExtFont : latinFont;
+const localeTags = { en: "en_GB", tr: "tr_TR", de: "de_DE" } as const;
+const localeTag = localeTags[lang];
+const variants = alternates(origin.toString(), path);
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": `${site.url}/#person`,
+  name: site.fullName,
+  alternateName: site.name,
+  url: site.url,
+  email: site.email,
+  jobTitle: "Full Stack Developer",
+  description:
+    "Mert Pekmen (Pekmen) is a full-stack developer in Istanbul building fast, quiet web products.",
+  knowsAbout: [
+    "Full-stack development",
+    "Web performance",
+    "Infrastructure",
+    "TypeScript",
+    "Astro",
+    "Cloudflare",
+  ],
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Istanbul",
+    addressCountry: "TR",
+  },
+  sameAs: site.socials.map((social) => social.href),
+};
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonical} />
+    <link
+      rel="preload"
+      href={preloadFont}
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    {
+      variants.map((variant) => (
+        <link rel="alternate" hreflang={variant.lang} href={variant.href} />
+      ))
+    }
+    <link rel="alternate" hreflang="x-default" href={canonicalUrl(origin.toString(), "en", path)} />
+
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Pekmen — Yazılar"
+      href="/rss.xml"
+    />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#f5f2eb" />
+    <meta name="color-scheme" content="light" />
+
+    {
+      noindex ? (
+        <meta name="robots" content="noindex, nofollow" />
+      ) : (
+        <meta name="robots" content="index, follow" />
+      )
+    }
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Mert Pekmen — web interfaces, backend systems, everything between."
+    />
+    <meta property="og:locale" content={localeTag} />
+    {
+      variants
+        .filter((variant) => variant.lang !== lang)
+        .map((variant) => (
+          <meta property="og:locale:alternate" content={localeTags[variant.lang]} />
+        ))
+    }
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDescription} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+
+    <slot name="head" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">
+      <L10n en="Skip to content" tr="İçeriğe geç" de="Zum Inhalt springen" />
+    </a>
+
+    <SiteHeader />
+
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+
+    <SiteFooter />
+  </body>
+</html>

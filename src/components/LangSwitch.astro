@@ -1,0 +1,31 @@
+---
+import { LANGS, LANG_LABELS } from "../i18n/languages";
+import { langOf, localePath, pathOf } from "../i18n/locale";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = "lang" } = Astro.props;
+
+const active = langOf(Astro);
+const target = pathOf(Astro);
+const search = Astro.url.search;
+---
+
+<nav class={className} aria-label="Language">
+  {
+    LANGS.map((lang) => (
+      <a
+        class="lang__btn"
+        href={localePath(lang, target) + search}
+        hreflang={lang}
+        lang={lang}
+        aria-label={LANG_LABELS[lang]}
+        aria-current={lang === active ? "true" : undefined}
+      >
+        {lang.toUpperCase()}
+      </a>
+    ))
+  }
+</nav>

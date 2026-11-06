@@ -1,0 +1,91 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import L10n from "../components/L10n.astro";
+import IconArrow from "../components/IconArrow.astro";
+import ContactForm from "../components/ContactForm.astro";
+import { site } from "../data/site";
+---
+
+<BaseLayout
+  title="Contact — Pekmen"
+  titleTr="İletişim — Pekmen"
+  titleDe="Kontakt — Pekmen"
+  description="A project, a question, or just a hello. Email Pekmen directly or send a note through the form."
+  descriptionTr="Bir iş, bir soru ya da sadece merhaba. Pekmen'e doğrudan e-posta yazın veya formu doldurun."
+  descriptionDe="Ein Projekt, eine Frage oder einfach Hallo. Schreiben Sie Pekmen direkt oder über das Formular."
+>
+  <section class="page-head">
+    <div class="container">
+      <div class="page-head__top">
+        <span class="label">
+          (Contact) <L10n en="Istanbul, TR" tr="İstanbul, TR" de="Istanbul, TR" />
+        </span>
+        <span class="label label--muted">GMT+3</span>
+      </div>
+
+      <div class="page-head__row">
+        <h1><L10n en="Say hello." tr="Merhaba deyin." de="Sagen Sie Hallo." /></h1>
+
+        <div class="page-head__aside">
+          <p class="page-head__intro">
+            <L10n
+              en="A project, a question, or just a hello. Email is the fastest route — I usually reply within a few days."
+              tr="Bir iş, bir soru ya da sadece merhaba. En hızlı yol e-posta — genelde birkaç gün içinde dönerim."
+              de="Ein Projekt, eine Frage oder einfach Hallo. E-Mail ist der schnellste Weg — ich antworte meist innerhalb weniger Tage."
+            />
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-page">
+    <div class="container contact-grid">
+      <div class="contact-details">
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Email" tr="E-posta" de="E-Mail" />
+          </span>
+          <p class="contact-details__value">
+            <a href={`mailto:${site.email}`}>{site.email}</a>
+          </p>
+        </div>
+
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Social" tr="Sosyal" de="Sozial" />
+          </span>
+          <div class="social-list">
+            {site.socials.map((social) => (
+              <a href={social.href} target="_blank" rel="noreferrer noopener">
+                {social.label}
+                <IconArrow />
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Based in" tr="Konum" de="Standort" />
+          </span>
+          <p class="contact-details__value">{site.location}</p>
+        </div>
+
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Local time" tr="Yerel saat" de="Ortszeit" />
+          </span>
+          <p class="contact-details__value">
+            <time data-clock datetime="">—</time>
+            <span class="label label--muted">/ GMT+3</span>
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <ContactForm />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

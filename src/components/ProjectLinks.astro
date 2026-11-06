@@ -1,0 +1,30 @@
+---
+import type { Project } from "../data/projects";
+import IconArrow from "./IconArrow.astro";
+import L10n from "./L10n.astro";
+
+interface Props {
+  project: Project;
+  compact?: boolean;
+}
+
+const { project, compact = false } = Astro.props;
+const primary = compact ? "text-link" : "btn btn--green";
+const secondary = compact ? "text-link" : "btn btn--outline";
+---
+
+{(project.live || project.repo || (!compact && (project.appStore || project.playStore))) && (
+  <div class="project-links">
+    {project.live && (
+      <a class={primary} href={project.live}>
+        {project.archived
+          ? <L10n en="Project website" tr="Proje sitesi" de="Projektwebsite" />
+          : <L10n en="Live site" tr="Canlı site" de="Live-Website" />}
+        <IconArrow />
+      </a>
+    )}
+    {project.repo && <a class={secondary} href={project.repo}>GitHub <IconArrow /></a>}
+    {!compact && project.appStore && <a class="text-link" href={project.appStore}>App Store <IconArrow /></a>}
+    {!compact && project.playStore && <a class="text-link" href={project.playStore}>Google Play <IconArrow /></a>}
+  </div>
+)}

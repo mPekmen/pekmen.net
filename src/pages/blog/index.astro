@@ -1,0 +1,92 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import L10n from "../../components/L10n.astro";
+import IconArrow from "../../components/IconArrow.astro";
+import { formatPostDate, posts } from "../../data/posts";
+import { langOf, localePath } from "../../i18n/locale";
+
+const lang = langOf(Astro);
+const count = String(posts.length).padStart(2, "0");
+
+const dateProps = (iso: string) => ({
+  en: formatPostDate(iso, "en"),
+  tr: formatPostDate(iso, "tr"),
+  de: formatPostDate(iso, "de"),
+});
+---
+
+<BaseLayout
+  title="Writing — Pekmen"
+  titleTr="Yazılar — Pekmen"
+  titleDe="Notizen — Pekmen"
+  description="Notes by Pekmen on software, systems and the machines in between."
+  descriptionTr="Pekmen'in yazılım, sistemler ve aradaki makineler üzerine notları."
+  descriptionDe="Notizen von Pekmen über Software, Systeme und die Maschinen dazwischen."
+>
+  <section class="page-head">
+    <div class="container">
+      <div class="page-head__top">
+        <span class="label">
+          (Index) <L10n en="Writing" tr="Yazılar" de="Notizen" />
+        </span>
+        <span class="label label--muted">
+          {count} <L10n en="posts" tr="yazı" de="Beiträge" />
+        </span>
+      </div>
+
+      <div class="page-head__row">
+        <h1><L10n en="Notes." tr="Notlar." de="Notizen." /></h1>
+
+        <div class="page-head__aside">
+          <p class="page-head__intro">
+            <L10n
+              en="Notes on software, systems and the things I ride. Written while doing them, not after."
+              tr="Yazılım, sistemler ve sürdüğüm şeyler üzerine notlar. Yaparken yazıldı, sonra değil."
+              de="Notizen über Software, Systeme und die Dinge, die ich fahre. Geschrieben währenddessen, nicht danach."
+            />
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--cream blog-index">
+    <div class="container">
+      {
+        posts.length === 0 ? (
+          <p class="blog-empty">
+            <L10n
+              en="New notes are on the way."
+              tr="Yeni notlar yolda."
+              de="Neue Notizen sind unterwegs."
+            />
+          </p>
+        ) : (
+          <ul class="post-list post-list--full">
+            {posts.map((post) => (
+              <li>
+                <a class="post-row" href={localePath(lang, `/blog/${post.slug}`)}>
+                  <time class="post-row__date" datetime={post.date}>
+                    <L10n {...dateProps(post.date)} />
+                  </time>
+                  <span class="post-row__body">
+                    <span class="post-row__title">
+                      <L10n en={post.title.en} tr={post.title.tr} de={post.title.de} />
+                    </span>
+                    <span class="post-row__excerpt">
+                      <L10n en={post.excerpt.en} tr={post.excerpt.tr} de={post.excerpt.de} />
+                    </span>
+                  </span>
+                  <span class="post-row__meta">
+                    {post.readingMinutes} <L10n en="min" tr="dk" de="Min." />
+                    <IconArrow />
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

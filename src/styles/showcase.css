@@ -1,0 +1,222 @@
+.project-index-intro {
+  max-width: 38ch;
+  margin-bottom: 0.6rem;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.project-plate .plate__media,
+.work-card__media,
+.project-cover {
+  border: 1px solid var(--line-strong);
+  background: var(--cream-2);
+}
+
+.project-plate .plate__media {
+  aspect-ratio: auto;
+  align-self: start;
+  padding: clamp(0.3rem, 0.85vw, 0.8rem);
+}
+
+.project-plate .plate__media img {
+  display: block;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.project-plate .plate__rail {
+  justify-content: center;
+}
+
+.project-plate .plate__title {
+  font-size: clamp(1.75rem, 3vw, 2.65rem);
+}
+
+.project-plate .plate__text {
+  max-width: 46ch;
+}
+
+.project-links,
+.project-detail__eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+}
+
+.project-detail .project-links {
+  margin-top: 0.5rem;
+}
+
+.project-links a {
+  width: fit-content;
+}
+
+.project-archive {
+  padding: 0.22rem 0.55rem;
+  border: 1px solid var(--line-strong);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.project-cover {
+  padding: clamp(0.3rem, 0.8vw, 0.75rem);
+  min-width: 0;
+}
+
+.project-cover img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.project-cover figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.8rem;
+  padding: 0.6rem 0.25rem 0.2rem;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.project-detail__intro .label {
+  margin-bottom: 0.75rem;
+}
+
+.project-detail__gallery-link {
+  justify-self: start;
+}
+
+.project-gallery,
+.currently-building {
+  border-block-start: 1px solid var(--line);
+  background: var(--cream-3);
+}
+
+.project-gallery {
+  padding-block: clamp(2.5rem, 6vw, 5rem);
+  scroll-margin-top: calc(var(--header-h) + 0.5rem);
+}
+
+.project-gallery__layout,
+.currently-building__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+  align-items: start;
+  gap: clamp(1.4rem, 5vw, 5rem);
+}
+
+.project-gallery h2 {
+  margin-block: 0.6rem 1rem;
+  font-size: clamp(1.85rem, 3.4vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+}
+
+.project-gallery__screens {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 17rem));
+  gap: 1.2rem;
+}
+
+.project-gallery__screens figure {
+  min-width: 0;
+}
+
+.project-gallery__screens a {
+  display: block;
+  padding: 0.35rem;
+  border: 1px solid var(--line-strong);
+  background: var(--cream-2);
+}
+
+.project-gallery__screens img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.project-gallery__screens figcaption {
+  margin-top: 0.55rem;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.currently-building__layout header .label {
+  display: block;
+  margin-bottom: 0.65rem;
+}
+
+.currently-building__list {
+  display: grid;
+  gap: 0.85rem;
+  list-style: none;
+  padding: 0;
+}
+
+.currently-building__entry {
+  display: grid;
+  gap: 0.6rem;
+  padding: clamp(1rem, 3vw, 1.65rem);
+  border: 1px solid var(--line-strong);
+  border-inline-start: 3px solid var(--green);
+  background: var(--cream);
+}
+
+.currently-building__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.45rem 0.8rem;
+}
+
+.currently-building__top h3 {
+  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+.currently-building__status {
+  color: var(--green-deep);
+  font-size: 0.75rem;
+}
+
+.currently-building__status::before {
+  content: "";
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-inline-end: 0.45rem;
+  vertical-align: 0.12rem;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.currently-building__entry p {
+  max-width: 54ch;
+  color: var(--ink-soft);
+}
+
+.currently-building__entry a {
+  justify-self: start;
+}
+
+@media (max-width: 900px) {
+  .project-gallery__layout,
+  .currently-building__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .project-detail .case-body {
+    grid-row: 1;
+  }
+
+  .project-gallery__screens {
+    grid-template-columns: minmax(0, 17rem);
+  }
+}

@@ -1,0 +1,261 @@
+---
+import L10n from "./L10n.astro";
+import IconArrow from "./IconArrow.astro";
+import { site } from "../data/site";
+import { langOf, pick } from "../i18n/locale";
+
+const lang = langOf(Astro);
+---
+
+<form
+  class="form"
+  action={`mailto:${site.email}`}
+  method="post"
+  enctype="text/plain"
+  novalidate
+  data-contact-form
+  data-endpoint="/api/contact"
+  data-email={site.email}
+>
+  <h2 class="form__title">
+    <L10n en="Send a note" tr="Bir not bırakın" de="Schreiben Sie mir" />
+  </h2>
+
+  <div class="form__row">
+    <div class="field">
+      <label for="contact-name"><L10n en="Name" tr="Ad" de="Name" /></label>
+      <input
+        id="contact-name"
+        name="name"
+        type="text"
+        autocomplete="name"
+        maxlength="120"
+        required
+        aria-describedby="contact-form-status"
+        placeholder={pick(lang, "Your name", "Adınız", "Ihr Name")}
+      />
+    </div>
+
+    <div class="field">
+      <label for="contact-email"><L10n en="Email" tr="E-posta" de="E-Mail" /></label>
+      <input
+        id="contact-email"
+        name="email"
+        type="email"
+        autocomplete="email"
+        maxlength="200"
+        required
+        aria-describedby="contact-form-status"
+        placeholder={pick(lang, "you@example.com", "siz@ornek.com", "sie@beispiel.com")}
+      />
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="contact-message"><L10n en="Message" tr="Mesaj" de="Nachricht" /></label>
+    <textarea
+      id="contact-message"
+      name="message"
+      rows="5"
+      maxlength="5000"
+      required
+      aria-describedby="contact-form-status"
+      placeholder={pick(
+        lang,
+        "Tell me what you have in mind…",
+        "Aklınızdakini anlatın…",
+        "Erzählen Sie, was Sie vorhaben…",
+      )}
+    ></textarea>
+  </div>
+
+  <input
+    class="honeypot"
+    type="text"
+    name="botcheck"
+    tabindex="-1"
+    autocomplete="off"
+    aria-hidden="true"
+  />
+
+  <p class="form__status" id="contact-form-status" data-form-status role="status" aria-live="polite"></p>
+
+  <div class="form__foot">
+    <p class="form__note">
+      <L10n
+        en="Your details go straight to my inbox. No newsletter, no tracking."
+        tr="Bilgileriniz doğrudan bana ulaşır. Bülten yok, takip yok."
+        de="Ihre Angaben landen direkt in meinem Postfach. Kein Newsletter, kein Tracking."
+      />
+    </p>
+    <button class="btn btn--green" type="submit" data-form-submit>
+      <span data-submit-text>
+        {pick(lang, "Send message", "Mesajı gönder", "Nachricht senden")}
+      </span>
+      <IconArrow />
+    </button>
+  </div>
+</form>
+
+<script>
+  type Lang = "en" | "tr" | "de";
+
+  const messages: Record<Lang, Record<string, string>> = {
+    en: {
+      required: "Please fill in your name, email and message.",
+      email: "Please enter a valid email address.",
+      sending: "Sending…",
+      send: "Send message",
+      success: "Message received — I'll get back to you soon.",
+      mailto: "Your email app should open with the message ready to send.",
+      error: "Something went wrong. Please try again, or email me directly.",
+    },
+    tr: {
+      required: "Lütfen adınızı, e-postanızı ve mesajınızı yazın.",
+      email: "Geçerli bir e-posta adresi yazın.",
+      sending: "Gönderiliyor…",
+      send: "Mesajı gönder",
+      success: "Mesajınız ulaştı — en kısa sürede döneceğim.",
+      mailto: "E-posta uygulamanız mesaj hazır şekilde açılmalı.",
+      error: "Bir şeyler ters gitti. Tekrar deneyin ya da doğrudan e-posta yazın.",
+    },
+    de: {
+      required: "Bitte Name, E-Mail und Nachricht ausfüllen.",
+      email: "Bitte eine gültige E-Mail-Adresse eingeben.",
+      sending: "Wird gesendet…",
+      send: "Nachricht senden",
+      success: "Nachricht angekommen — ich melde mich bald.",
+      mailto: "Ihr E-Mail-Programm sollte sich mit der fertigen Nachricht öffnen.",
+      error: "Etwas ist schiefgelaufen. Bitte erneut versuchen oder direkt schreiben.",
+    },
+  };
+
+  const form = document.querySelector<HTMLFormElement>("[data-contact-form]");
+
+  if (form) {
+    const status = form.querySelector<HTMLElement>("[data-form-status]");
+    const submit = form.querySelector<HTMLButtonElement>("[data-form-submit]");
+    const submitText = form.querySelector<HTMLElement>("[data-submit-text]");
+
+    let messageKey: string | null = null;
+    let messageState: "success" | "error" | "idle" = "idle";
+    let busy = false;
+
+    const lang = (): Lang => {
+      const value = document.documentElement.lang;
+      return value === "tr" || value === "de" ? value : "en";
+    };
+
+    const renderMessage = () => {
+      if (!status) return;
+      status.dataset.state = messageState;
+      status.textContent = messageKey ? messages[lang()][messageKey] ?? "" : "";
+    };
+
+    const show = (key: string, state: "success" | "error") => {
+      messageKey = key;
+      messageState = state;
+      renderMessage();
+    };
+
+    const nameField = form.elements.namedItem("name") as HTMLInputElement | null;
+    const emailField = form.elements.namedItem("email") as HTMLInputElement | null;
+    const messageField = form.elements.namedItem("message") as HTMLTextAreaElement | null;
+
+    form.querySelectorAll("input, textarea").forEach((field) => {
+      field.addEventListener("input", () => field.removeAttribute("aria-invalid"));
+    });
+
+    const setBusy = (value: boolean) => {
+      busy = value;
+      if (submit) submit.disabled = value;
+      if (submitText) {
+        submitText.textContent = value ? messages[lang()].sending : messages[lang()].send;
+      }
+    };
+
+    const openMailApp = (name: string, email: string, message: string) => {
+      const fallbackEmail = form.dataset.email ?? "";
+      const subject = encodeURIComponent(`Website message from ${name}`);
+      const body = encodeURIComponent(`${message}\n\n— ${name}\n${email}`);
+      window.location.href = `mailto:${fallbackEmail}?subject=${subject}&body=${body}`;
+      show("mailto", "success");
+    };
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (busy) return;
+
+      const data = new FormData(form);
+
+      if (String(data.get("botcheck") ?? "").length > 0) return;
+
+      const name = String(data.get("name") ?? "").trim();
+      const email = String(data.get("email") ?? "").trim();
+      const message = String(data.get("message") ?? "").trim();
+
+      [nameField, emailField, messageField].forEach((field) =>
+        field?.removeAttribute("aria-invalid")
+      );
+
+      if (!name || !email || !message) {
+        if (!name) nameField?.setAttribute("aria-invalid", "true");
+        if (!email) emailField?.setAttribute("aria-invalid", "true");
+        if (!message) messageField?.setAttribute("aria-invalid", "true");
+        show("required", "error");
+        (!name ? nameField : !email ? emailField : messageField)?.focus();
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        emailField?.setAttribute("aria-invalid", "true");
+        show("email", "error");
+        emailField?.focus();
+        return;
+      }
+
+      const endpoint = form.dataset.endpoint ?? "/api/contact";
+
+      setBusy(true);
+      show("sending", "success");
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            message,
+            botcheck: String(data.get("botcheck") ?? ""),
+          }),
+        });
+
+        const result = (await response.json().catch(() => null)) as
+          | { ok?: boolean; error?: string }
+          | null;
+
+        // Resend is not configured yet: let the visitor send it from their
+        // own mail app instead of dropping the message.
+        if (response.status === 503 && result?.error === "not_configured") {
+          openMailApp(name, email, message);
+          return;
+        }
+
+        if (!response.ok || !result?.ok) {
+          throw new Error("Contact request rejected");
+        }
+
+        form.reset();
+        show("success", "success");
+      } catch {
+        show("error", "error");
+      } finally {
+        setBusy(false);
+      }
+    });
+  }
+</script>

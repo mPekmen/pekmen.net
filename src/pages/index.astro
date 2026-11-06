@@ -1,0 +1,199 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import L10n from "../components/L10n.astro";
+import IconArrow from "../components/IconArrow.astro";
+import WorkCard from "../components/WorkCard.astro";
+import HomeHero from "../components/HomeHero.astro";
+import { projects } from "../data/projects";
+import { formatPostDate, posts } from "../data/posts";
+import { langOf, localePath } from "../i18n/locale";
+import "../styles/showcase.css";
+
+const lang = langOf(Astro);
+const selected = projects.slice(0, 4);
+const latestPosts = posts.slice(0, 3);
+
+const dateProps = (iso: string) => ({
+  en: formatPostDate(iso, "en"),
+  tr: formatPostDate(iso, "tr"),
+  de: formatPostDate(iso, "de"),
+});
+---
+
+<BaseLayout
+  title="Mert Pekmen — Full Stack Developer"
+  titleTr="Mert Pekmen — Full Stack Developer"
+  titleDe="Mert Pekmen — Full Stack Developer"
+  description="Pekmen (Mert Pekmen) builds fast, quiet web products — from the interface to the servers and networks underneath. Selected work, case studies and booking."
+  descriptionTr="Pekmen (Mert Pekmen) hızlı ve sade web ürünleri kurar — arayüzden altındaki sunuculara ve ağlara kadar. Seçili işler, vaka analizleri ve randevu."
+  descriptionDe="Pekmen (Mert Pekmen) baut schnelle, leise Webprodukte — vom Interface bis zu den Servern und Netzen darunter. Ausgewählte Arbeiten, Case Studies und Terminbuchung."
+>
+  <HomeHero />
+
+  <section class="section section--cream" id="work">
+    <div class="container">
+      <div class="section-head">
+        <span class="label">
+          (01) <L10n en="Selected work" tr="Seçili işler" de="Ausgewählte Arbeiten" />
+        </span>
+        <h2 class="section-head__title">
+          <L10n en="Things I've built." tr="Yaptıklarım." de="Gebaut." />
+        </h2>
+        <div class="section-head__aside">
+          <a class="text-link" href={localePath(lang, "/projects")}>
+            <L10n en="All projects" tr="Tüm projeler" de="Alle Projekte" />
+            <IconArrow direction="right" />
+          </a>
+        </div>
+      </div>
+
+      <div class="work-grid">
+        {selected.map((project) => <WorkCard project={project} />)}
+      </div>
+    </div>
+  </section>
+
+
+  {latestPosts.length > 0 && (
+  <section class="section section--cream blog-teaser" id="writing">
+    <div class="container">
+      <div class="section-head">
+        <span class="label">
+          (02) <L10n en="Writing" tr="Yazılar" de="Notizen" />
+        </span>
+        <h2 class="section-head__title">
+          <L10n en="Notes." tr="Notlar." de="Notizen." />
+        </h2>
+        <div class="section-head__aside">
+          <a class="text-link" href={localePath(lang, "/blog")}>
+            <L10n en="All writing" tr="Tüm yazılar" de="Alle Beiträge" />
+            <IconArrow direction="right" />
+          </a>
+        </div>
+      </div>
+
+      <ul class="post-list">
+        {latestPosts.map((post) => (
+          <li>
+            <a class="post-row" href={localePath(lang, `/blog/${post.slug}`)}>
+              <time class="post-row__date" datetime={post.date}>
+                <L10n {...dateProps(post.date)} />
+              </time>
+              <span class="post-row__body">
+                <span class="post-row__title">
+                  <L10n en={post.title.en} tr={post.title.tr} de={post.title.de} />
+                </span>
+                <span class="post-row__excerpt">
+                  <L10n en={post.excerpt.en} tr={post.excerpt.tr} de={post.excerpt.de} />
+                </span>
+              </span>
+              <span class="post-row__meta">
+                {post.readingMinutes} <L10n en="min" tr="dk" de="Min." />
+                <IconArrow />
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+  )}
+
+  <section class="statement">
+    <div class="container statement__grid">
+      <div>
+        <span class="label">
+          (03) <L10n en="Principle" tr="İlke" de="Prinzip" />
+        </span>
+      </div>
+      <div>
+        <p class="statement__text">
+          <L10n
+            html
+            en="Fast, clear and easy to maintain. <em>Everything else is decoration.</em>"
+            tr="Hızlı, açık ve bakımı kolay. <em>Gerisi süs.</em>"
+            de="Schnell, klar und wartbar. <em>Alles andere ist Dekoration.</em>"
+          />
+        </p>
+        <p class="statement__foot">
+          <L10n en="Working principle" tr="Çalışma ilkesi" de="Arbeitsprinzip" />
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--cream">
+    <div class="container">
+      <div class="section-head">
+        <span class="label">
+          (04) <L10n en="Approach" tr="Yaklaşım" de="Ansatz" />
+        </span>
+        <h2 class="section-head__title">
+          <L10n en="How I work." tr="Nasıl çalışırım." de="Wie ich arbeite." />
+        </h2>
+        <div class="section-head__aside">
+          <p class="section-head__intro body-copy">
+            <L10n
+              en="One person across the whole stack, so decisions don't get lost between hand-offs."
+              tr="Tüm katmanlarda tek kişi; böylece kararlar devir teslim arasında kaybolmuyor."
+              de="Eine Person über den ganzen Stack — Entscheidungen gehen nicht zwischen Übergaben verloren."
+            />
+          </p>
+        </div>
+      </div>
+
+      <div class="approach-grid">
+        <article class="approach-item">
+          <span class="approach-item__index">01</span>
+          <h3><L10n en="Interface" tr="Arayüz" de="Interface" /></h3>
+          <p class="approach-item__body">
+            <L10n
+              en="Typographic, accessible interfaces that load fast and stay usable on any screen."
+              tr="Hızlı açılan, her ekranda kullanılabilen, tipografi odaklı ve erişilebilir arayüzler."
+              de="Typografische, barrierefreie Interfaces, die schnell laden und auf jedem Bildschirm nutzbar bleiben."
+            />
+          </p>
+          <ul class="approach-item__tools">
+            <li>Astro</li>
+            <li>TypeScript</li>
+            <li>CSS</li>
+          </ul>
+        </article>
+
+        <article class="approach-item">
+          <span class="approach-item__index">02</span>
+          <h3><L10n en="Systems" tr="Sistemler" de="Systeme" /></h3>
+          <p class="approach-item__body">
+            <L10n
+              en="APIs, data models and authentication that still make sense six months after launch."
+              tr="Yayına girdikten altı ay sonra da anlamlı kalan API'ler, veri modelleri ve kimlik doğrulama."
+              de="APIs, Datenmodelle und Authentifizierung, die auch sechs Monate nach dem Launch noch Sinn ergeben."
+            />
+          </p>
+          <ul class="approach-item__tools">
+            <li>Node.js</li>
+            <li>Supabase</li>
+            <li>PostgreSQL</li>
+          </ul>
+        </article>
+
+        <article class="approach-item">
+          <span class="approach-item__index">03</span>
+          <h3><L10n en="Infrastructure" tr="Altyapı" de="Infrastruktur" /></h3>
+          <p class="approach-item__body">
+            <L10n
+              en="Servers, DNS and networks set up to be boring — in the best possible way."
+              tr="Sıkıcı olacak şekilde kurulmuş sunucular, DNS ve ağlar — en iyi anlamıyla."
+              de="Server, DNS und Netze, eingerichtet, um langweilig zu sein — im besten Sinne."
+            />
+          </p>
+          <ul class="approach-item__tools">
+            <li>Linux</li>
+            <li>Docker</li>
+            <li>Tailscale</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,42 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import L10n from "../components/L10n.astro";
+import IconArrow from "../components/IconArrow.astro";
+import { langOf, localePath } from "../i18n/locale";
+
+const lang = langOf(Astro);
+---
+
+<BaseLayout
+  title="Page not found — Pekmen"
+  titleTr="Sayfa bulunamadı — Pekmen"
+  titleDe="Seite nicht gefunden — Pekmen"
+  description="Nothing here. The address may have changed — or never existed."
+  descriptionTr="Burada bir şey yok. Adres değişmiş ya da hiç var olmamış olabilir."
+  descriptionDe="Hier ist nichts. Die Adresse hat sich geändert — oder nie existiert."
+  noindex
+>
+  <section class="notfound">
+    <div class="container">
+      <p class="notfound__code" aria-hidden="true">404</p>
+      <h1><L10n en="Page not found." tr="Sayfa bulunamadı." de="Seite nicht gefunden." /></h1>
+      <p>
+        <L10n
+          en="Nothing here. The address may have changed — or never existed."
+          tr="Burada bir şey yok. Adres değişmiş ya da hiç var olmamış olabilir."
+          de="Hier ist nichts. Die Adresse hat sich geändert — oder nie existiert."
+        />
+      </p>
+      <div class="notfound__actions">
+        <a class="btn btn--green" href={localePath(lang, "/")}>
+          <L10n en="Back home" tr="Ana sayfaya dönün" de="Zur Startseite" />
+          <IconArrow />
+        </a>
+        <a class="btn btn--outline" href={localePath(lang, "/projects")}>
+          <L10n en="Selected work" tr="Seçili işler" de="Ausgewählte Arbeiten" />
+          <IconArrow />
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

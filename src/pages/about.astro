@@ -1,0 +1,171 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import L10n from "../components/L10n.astro";
+import IconArrow from "../components/IconArrow.astro";
+import { site } from "../data/site";
+import { langOf, localePath } from "../i18n/locale";
+
+const lang = langOf(Astro);
+const canonical = `${site.url}${localePath(lang, "/about/")}`;
+
+const profileSchema = {
+  "@context": "https://schema.org",
+  "@type": "ProfilePage",
+  url: canonical,
+  name: "Mert Pekmen — About",
+  mainEntity: {
+    "@id": `${site.url}/#person`,
+  },
+};
+---
+
+<BaseLayout
+  title="Mert Pekmen — About"
+  titleTr="Mert Pekmen — Hakkında"
+  titleDe="Mert Pekmen — Über"
+  description="Mert Pekmen (Pekmen) is a full-stack developer in Istanbul. Background, selected work and contact."
+  descriptionTr="Mert Pekmen (Pekmen), İstanbul'da çalışan bir full-stack geliştiricidir. Geçmiş, seçili işler ve iletişim."
+  descriptionDe="Mert Pekmen (Pekmen) ist ein Full-Stack-Entwickler in Istanbul. Werdegang, ausgewählte Arbeiten und Kontakt."
+>
+  <script
+    slot="head"
+    type="application/ld+json"
+    set:html={JSON.stringify(profileSchema)}
+  />
+
+  <section class="page-head">
+    <div class="container">
+      <div class="page-head__top">
+        <span class="label">
+          (About) <L10n en="Istanbul, TR" tr="İstanbul, TR" de="Istanbul, TR" />
+        </span>
+        <span class="label label--muted">Mert Pekmen</span>
+      </div>
+
+      <div class="page-head__row">
+        <h1>Mert Pekmen.</h1>
+
+        <div class="page-head__aside">
+          <p class="page-head__intro">
+            <L10n
+              en="Pekmen is the short name I use online. I'm Mert Pekmen, a full-stack developer based in Istanbul."
+              tr="İnternette kullandığım kısa ad Pekmen. Ben Mert Pekmen, İstanbul'da çalışan bir full-stack geliştiriciyim."
+              de="Pekmen ist der kurze Name, den ich online nutze. Ich bin Mert Pekmen, Full-Stack-Entwickler in Istanbul."
+            />
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-page">
+    <div class="container contact-grid">
+      <div class="contact-details">
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Based in" tr="Konum" de="Standort" />
+          </span>
+          <p class="contact-details__value">{site.location}</p>
+        </div>
+
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Focus" tr="Odak" de="Fokus" />
+          </span>
+          <p class="contact-details__value">
+            <L10n
+              en="Full-stack web, infrastructure, performance"
+              tr="Full-stack web, altyapı, performans"
+              de="Full-Stack-Web, Infrastruktur, Performance"
+            />
+          </p>
+        </div>
+
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Email" tr="E-posta" de="E-Mail" />
+          </span>
+          <p class="contact-details__value">
+            <a href={`mailto:${site.email}`}>{site.email}</a>
+          </p>
+        </div>
+
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Elsewhere" tr="Bağlantılar" de="Anderswo" />
+          </span>
+          <div class="social-list">
+            {site.socials.map((social) => (
+              <a href={social.href} target="_blank" rel="noreferrer noopener">
+                {social.label}
+                <IconArrow />
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div class="about-copy">
+        <p>
+          <L10n
+            en="I build fast, quiet web products — from the interface down to the servers and networks underneath. I care about the parts visitors never notice: small payloads, clear structure, and systems that stay easy to maintain."
+            tr="Hızlı ve sade web ürünleri kuruyorum — arayüzden altındaki sunuculara ve ağlara kadar. Ziyaretçilerin fark etmediği kısımlara önem veriyorum: küçük dosyalar, açık yapı ve bakımı kolay sistemler."
+            de="Ich baue schnelle, leise Webprodukte — vom Interface bis zu den Servern und Netzen darunter. Mir sind die Dinge wichtig, die Besucher nie bemerken: kleine Payloads, klare Struktur und Systeme, die wartbar bleiben."
+          />
+        </p>
+
+        <p>
+          <L10n
+            en="My work sits between product and infrastructure. I've built a booking platform used by more than 9,000 salons, a local business site, a Discord bot, and this site. The common thread is the same: make the useful thing load fast and keep it simple to run."
+            tr="İşim ürün ile altyapı arasında duruyor. 9.000'den fazla salonun kullandığı bir randevu platformu, bir yerel işletme sitesi, bir Discord botu ve bu siteyi kurdum. Ortak nokta aynı: işe yarayan şeyi hızlı yükle ve çalıştırması kolay tut."
+            de="Meine Arbeit liegt zwischen Produkt und Infrastruktur. Ich habe eine Buchungsplattform für über 9.000 Salons, eine lokale Unternehmensseite, einen Discord-Bot und diese Website gebaut. Der rote Faden ist derselbe: Das Nützliche schnell laden und einfach betreibbar halten."
+          />
+        </p>
+
+        <p>
+          <L10n
+            en="If you want to talk about a project, the fastest route is email. You can also see selected work or book a short call."
+            tr="Bir proje hakkında konuşmak isterseniz en hızlı yol e-posta. Seçili işlere bakabilir veya kısa bir görüşme ayarlayabilirsiniz."
+            de="Wenn Sie über ein Projekt sprechen möchten, ist E-Mail der schnellste Weg. Sie können sich auch ausgewählte Arbeiten ansehen oder ein kurzes Gespräch buchen."
+          />
+        </p>
+
+        <div class="about-links">
+          <a class="text-link" href={localePath(lang, "/projects/")}>
+            <L10n en="Selected work" tr="Seçili işler" de="Ausgewählte Arbeiten" />
+            <IconArrow />
+          </a>
+          <a class="text-link" href={localePath(lang, "/contact/")}>
+            <L10n en="Contact" tr="İletişim" de="Kontakt" />
+            <IconArrow />
+          </a>
+          <a class="text-link" href={localePath(lang, "/appointment/")}>
+            <L10n en="Book a call" tr="Randevu al" de="Termin buchen" />
+            <IconArrow />
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .about-copy {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 62ch;
+  }
+
+  .about-copy p {
+    color: var(--ink-soft);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+
+  .about-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+  }
+</style>

@@ -1,0 +1,123 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import L10n from "../../components/L10n.astro";
+import IconArrow from "../../components/IconArrow.astro";
+import { formatPostDate, getNextPost, getPost, posts } from "../../data/posts";
+import { site } from "../../data/site";
+import { langOf, localePath } from "../../i18n/locale";
+
+const lang = langOf(Astro);
+const post = getPost(Astro.params.slug ?? "");
+
+if (!post) {
+  Astro.response.status = 404;
+  return Astro.rewrite("/404");
+}
+
+const next = getNextPost(post.slug);
+const canonical = `${site.url}${localePath(lang, `/blog/${post.slug}/`)}`;
+
+const postSchema = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: post.title.en,
+  description: post.excerpt.en,
+  datePublished: post.date,
+  dateModified: post.date,
+  inLanguage: lang,
+  url: canonical,
+  mainEntityOfPage: canonical,
+  image: `${site.url}/og.png`,
+  author: { "@id": `${site.url}/#person` },
+  publisher: { "@id": `${site.url}/#person` },
+};
+
+const dateProps = (iso: string) => ({
+  en: formatPostDate(iso, "en"),
+  tr: formatPostDate(iso, "tr"),
+  de: formatPostDate(iso, "de"),
+});
+---
+
+<BaseLayout
+  title={`${post.title.en} — Pekmen`}
+  titleTr={`${post.title.tr} — Pekmen`}
+  titleDe={`${post.title.de} — Pekmen`}
+  description={post.excerpt.en}
+  descriptionTr={post.excerpt.tr}
+  descriptionDe={post.excerpt.de}
+>
+  <script
+    slot="head"
+    type="application/ld+json"
+    set:html={JSON.stringify(postSchema)}
+  />
+
+  <article>
+    <header class="post-head">
+      <div class="container">
+        <div class="page-head__top">
+          <a class="back-link" href={localePath(lang, "/blog")}>
+            <IconArrow direction="left" />
+            <L10n en="All writing" tr="Tüm yazılar" de="Alle Beiträge" />
+          </a>
+          <span class="label label--muted">
+            {post.readingMinutes} <L10n en="min read" tr="dk okuma" de="Min. Lesezeit" />
+          </span>
+        </div>
+
+        <p class="post-head__kicker">
+          <span>
+            <time datetime={post.date}>
+              <L10n {...dateProps(post.date)} />
+            </time>
+          </span>
+          {post.tags.map((tag) => (
+            <span>{tag}</span>
+          ))}
+        </p>
+
+        <h1>
+          <L10n en={post.title.en} tr={post.title.tr} de={post.title.de} />
+        </h1>
+
+        <p class="post-head__excerpt">
+          <L10n en={post.excerpt.en} tr={post.excerpt.tr} de={post.excerpt.de} />
+        </p>
+
+        <p class="post-head__byline">
+          <L10n en="Written by" tr="Yazan" de="Geschrieben von" />{" "}
+          <a href={localePath(lang, "/about/")}>Mert Pekmen</a>
+        </p>
+      </div>
+    </header>
+
+    <div class="post-body">
+      <div class="container">
+        <div class="post-body__inner">
+          {post.body.map((paragraph) => (
+            <p>
+              <L10n en={paragraph.en} tr={paragraph.tr} de={paragraph.de} />
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  </article>
+
+  {posts.length > 1 && (
+  <section class="post-next">
+    <div class="container">
+      <a class="post-next__link" href={localePath(lang, `/blog/${next.slug}`)}>
+        <span class="label">
+          <L10n en="Next post" tr="Sonraki yazı" de="Nächster Beitrag" />
+        </span>
+        <span class="post-next__title">
+          <L10n en={next.title.en} tr={next.title.tr} de={next.title.de} />
+        </span>
+        <IconArrow />
+      </a>
+    </div>
+  </section>
+  )}
+</BaseLayout>

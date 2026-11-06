@@ -1,0 +1,496 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import AdminAppointment from "./AdminAppointment.astro";
+import { ADMIN_COOKIE, ADMIN_LOGIN_COOKIE, adminCsrfToken, createSessionToken, isAdminConfigured, sessionCookieOptions, verifySessionToken } from "../../server/admin";
+import { readAdminBookings } from "../../server/admin-bookings";
+import { bookingConfig, isEmailConfigured } from "../../server/config";
+import { dateKeyInZone } from "../../server/time";
+import type { BookingEvent } from "../../server/google";
+
+interface Props { section: "overview" | "appointments" | "system" }
+const { section } = Astro.props;
+const session = Astro.cookies.get(ADMIN_COOKIE)?.value ?? "";
+const authed = verifySessionToken(session);
+const configured = isAdminConfigured();
+let loginSession = Astro.cookies.get(ADMIN_LOGIN_COOKIE)?.value ?? "";
+if (configured && !authed && !verifySessionToken(loginSession, "login")) {
+  loginSession = createSessionToken("login");
+  Astro.cookies.set(ADMIN_LOGIN_COOKIE, loginSession, sessionCookieOptions(Astro.url, "login"));
+}
+const params = Astro.url.searchParams;
+const errorKey = params.get("error") ?? "";
+const okKey = params.get("ok") ?? "";
+const mailResult = params.get("mail");
+const settings = bookingConfig();
+const { timeZone } = settings;
+const snapshot = authed ? await readAdminBookings(params.get("refresh") === "1" || Boolean(okKey)) : null;
+const ready = snapshot?.state === "ready" ? snapshot : null;
+const bookings = ready?.bookings ?? [];
+const pending = bookings.filter((booking) => booking.bookingStatus === "pending");
+const confirmed = bookings.filter((booking) => booking.bookingStatus === "confirmed");
+const next = confirmed[0];
+const day = new Intl.DateTimeFormat("tr-TR", { dateStyle: "full", timeZone });
+const dateTime = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone });
+const groups = new Map<string, BookingEvent[]>();
+for (const booking of bookings) {
+  const key = dateKeyInZone(new Date(booking.start), timeZone);
+  const group = groups.get(key);
+  if (group) group.push(booking);
+  else groups.set(key, [booking]);
+}
+const pages = {
+  overview: { title: "Overview", description: "Randevu talepleri, sıradaki görüşme ve takvim durumu.", path: "/admin" },
+  appointments: { title: "Appointments", description: "Yaklaşan randevuları bulun, onaylayın veya yeniden planlayın.", path: "/admin/appointments" },
+  system: { title: "System", description: "Takvim bağlantısını ve etkin rezervasyon ayarlarını inceleyin.", path: "/admin/system" },
+};
+const page = pages[section];
+const calendarStatus = ready ? "Takvim erişilebilir" : snapshot?.state === "unconfigured" ? "Yapılandırılmamış" : "Takvim okunamadı";
+const calendarMessage = snapshot?.state === "unconfigured"
+  ? "Google Takvim bağlantısı yapılandırılmamış."
+  : "Google Takvim okunamadı. Bağlantıyı yenileyerek tekrar deneyin.";
+const coordinatorConfigured = Boolean(Astro.locals.bookingCoordinator);
+const emailConfigured = isEmailConfigured();
+const workDayNames = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+const workTime = (hour: number) => String(hour).padStart(2, "0") + ":00";
+const errors = new Map(Object.entries({
+  config: "Panelin güvenlik yapılandırması tamamlanmamış.",
+  password: "Şifre yanlış. Tekrar deneyin.",
+  rate: "Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.",
+  auth: "Oturum sona erdi. Yeniden giriş yapın.",
+  csrf: "Giriş formunun süresi doldu. Yeniden deneyin.",
+  cancel_confirmation: "İptali randevu ayrıntılarından açıkça onaylayın.",
+  id: "Geçersiz kayıt.",
+  not_found: "Randevu bulunamadı. İptal edilmiş olabilir.",
+  booking_in_progress: "Takvim işleminin sonucu henüz doğrulanmadı. Biraz sonra tekrar kontrol edin.",
+  slot: "Seçilen saat artık müsait değil. Başka bir saat seçin.",
+  invalid_slot: "Geçerli bir saat seçin.",
+  missing_email: "Katılımcının e-posta adresi bulunamadı.",
+  google_auth: "Google Takvim bağlantısı doğrulanamadı.",
+  google_error: "Google Takvim isteği reddedildi.",
+  not_configured: "Randevu koordinatörü yapılandırılmamış.",
+  confirm: "Randevu onaylanamadı.",
+  update: "Randevu güncellenemedi.",
+  delete: "Randevu iptal edilemedi.",
+}));
+const successes = new Map(Object.entries({
+  confirmed: "Randevu takvimde onaylandı.",
+  rescheduled: "Randevunun yeni saati takvimde kayıtlı.",
+  canceled: "Randevu takvimde iptal edildi.",
+  already: "Bu randevu zaten takvimde onaylı.",
+}));
+const errorText = errors.get(errorKey);
+const okText = successes.get(okKey);
+const mailText = mailResult === "0" ? "E-posta gönderilemedi. Katılımcıya elle haber vermeniz gerekebilir."
+  : mailResult === "1" ? "Bildirim e-posta sağlayıcısına iletildi."
+  : mailResult === "skipped" || okKey === "already" ? "Yeni bir bildirim e-postası gönderilmedi." : "";
+---
+
+<AdminLayout title={authed ? `${page.title} — Pekmen Studio` : "Giriş — Pekmen Studio"}
+  section={authed ? section : undefined}
+  logoutToken={authed ? adminCsrfToken(session, "logout") : undefined}>
+  {!authed ? (
+    <section class="studio-login-card">
+      <p class="studio-kicker">Özel alan</p>
+      <h1>{configured ? "Panele giriş" : "Kurulum gerekli"}</h1>
+      <p class="studio-muted">{configured ? "Randevularınızı yönetmek için giriş yapın." : "Yönetici oturumu için sunucu yapılandırmasını kontrol edin."}</p>
+      {configured && (
+        <form method="post" action="/api/admin/login" class="studio-editor-form">
+          <input type="hidden" name="csrf" value={adminCsrfToken(loginSession, "login")} />
+          <label>Şifre<input name="password" type="password" autocomplete="current-password" required /></label>
+          <button class="studio-button studio-button--primary" type="submit">Giriş yap</button>
+        </form>
+      )}
+      {errorText && <p class="studio-notice studio-notice--error" role="alert">{errorText}</p>}
+    </section>
+  ) : (
+    <div class="studio-workspace" data-admin-live data-signature={ready?.signature} data-time-zone={timeZone}>
+      <header class="studio-page-header">
+        <div>
+          <p class="studio-kicker">Pekmen Studio</p>
+          <h1 lang="en">{page.title}</h1>
+          <p class="studio-muted">{page.description}</p>
+        </div>
+        <a class="studio-button" href={page.path + "?refresh=1"} data-refresh-link>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10a8 8 0 1 0-1 7M20 4v6h-6" /></svg>
+          Yenile
+        </a>
+      </header>
+      <div class="studio-sync">
+        <span class:list={["studio-status", ready ? "studio-status--good" : "studio-status--attention"]} data-calendar-status>{calendarStatus}</span>
+        <p role="status" data-refresh-status>{ready ? `Son başarılı güncelleme ${dateTime.format(ready.checkedAt)}` : "Son başarılı kontrol bilgisi yok."}</p>
+      </div>
+
+      {okText && <div class="studio-notice studio-notice--good" role="status" tabindex="-1" data-operation-feedback>
+        <strong>{okText}</strong>
+        {mailText && <p class:list={{ "studio-mail-error": mailResult === "0" }}>{mailText}</p>}
+      </div>}
+      {errorText && <p class="studio-notice studio-notice--error" role="alert" tabindex="-1" data-operation-feedback>{errorText}</p>}
+
+      {section !== "system" && !ready && <p class="studio-notice studio-notice--error" role="status">{calendarMessage}</p>}
+
+      {section === "overview" && ready && (
+        <>
+          <div class="studio-metrics">
+            <section class="studio-card studio-metric studio-metric--attention">
+              <h2>Onay bekleyen</h2><strong>{pending.length}</strong>
+              <a href="/admin/appointments#pending">Bekleyenleri aç <span aria-hidden="true">↗</span></a>
+            </section>
+            <section class="studio-card studio-metric">
+              <h2>Yaklaşan randevular</h2><strong>{bookings.length}</strong>
+              <a href="/admin/appointments">Randevuları aç <span aria-hidden="true">↗</span></a>
+            </section>
+            <section class="studio-card studio-metric">
+              <h2>Sıradaki görüşme</h2><strong class="studio-next">{next?.name ?? "Onaylı görüşme yok"}</strong>
+              {next && <time datetime={next.startIso}>{dateTime.format(next.start)}</time>}
+            </section>
+          </div>
+          <section class="studio-card studio-queue">
+            <header class="studio-section-head"><div><h2>Onay kuyruğu</h2><p class="studio-muted">Onaylandığında katılımcıya bildirim gönderilmeye çalışılır.</p></div></header>
+            {pending.length ? (
+              <ul class="studio-appointments">
+                {pending.slice(0, 4).map((booking) => <AdminAppointment {booking} {session} {timeZone} leadHours={settings.leadHours} compact />)}
+              </ul>
+            ) : <p class="studio-empty">Onay bekleyen talep yok.</p>}
+            {pending.length > 4 && <a class="studio-queue-footer" href="/admin/appointments#pending">Tüm bekleyen talepler</a>}
+          </section>
+          <section class="studio-card studio-queue">
+            <header class="studio-section-head"><div><h2>Yaklaşan görüşmeler</h2><p class="studio-muted">Onaylanmış randevular, tarih sırasıyla.</p></div></header>
+            {confirmed.length ? (
+              <ul class="studio-appointments">
+                {confirmed.slice(0, 4).map((booking) =>
+                  <AdminAppointment {booking} {session} {timeZone} leadHours={settings.leadHours} compact />)}
+              </ul>
+            ) : <p class="studio-empty">Yaklaşan onaylı görüşme yok.</p>}
+          </section>
+        </>
+      )}
+
+      {section === "appointments" && ready && (
+        <section class="studio-card studio-directory">
+          <header class="studio-section-head"><div><h2>Randevu listesi</h2><p class="studio-muted">Yaklaşan kayıtlar · {timeZone}</p></div></header>
+          <div class="studio-filters" data-appointment-filters hidden>
+            <label>Arama<input type="search" data-search placeholder="İsim veya e-posta" /></label>
+            <label>Durum<select data-status><option value="">Tümü</option><option value="pending">Onay bekliyor</option><option value="confirmed">Onaylandı</option></select></label>
+            <label>Başlangıç<input type="date" data-from /></label>
+            <label>Bitiş<input type="date" data-to /></label>
+            <button type="button" class="studio-button" data-clear>Temizle</button>
+          </div>
+          <p class="studio-results" role="status" data-results>{bookings.length} randevu</p>
+          <p class="studio-empty" data-filter-empty hidden>Bu filtrelerle eşleşen randevu yok.</p>
+          {!bookings.length && <p class="studio-empty">Yaklaşan randevu yok.</p>}
+          {[...groups.values()].map((items) => (
+            <section class="studio-day" data-appointment-group>
+              <h3>{day.format(items[0]!.start)}</h3>
+              <ul class="studio-appointments">
+                {items.map((booking) => <AdminAppointment {booking} {session} {timeZone} leadHours={settings.leadHours} />)}
+              </ul>
+            </section>
+          ))}
+        </section>
+      )}
+
+      {section === "system" && (
+        <div class="studio-system-grid">
+          <section class="studio-card">
+            <header class="studio-section-head"><div><h2>Bağlantılar</h2><p class="studio-muted">Bu panelin doğrulayabildiği sistem bilgileri.</p></div></header>
+            <dl class="studio-properties">
+              <div><dt>Google Takvim</dt><dd data-system-calendar>{calendarStatus}</dd></div>
+              <div><dt>Son başarılı takvim okuması</dt><dd data-system-checked>{ready ? dateTime.format(ready.checkedAt) : "Bilgi yok"}</dd></div>
+              <div><dt>Panel sunucusu</dt><dd>Bu isteğe yanıt verdi</dd></div>
+              <div><dt>Randevu koordinatörü</dt><dd>{coordinatorConfigured ? "Yapılandırma mevcut" : "Yapılandırılmamış"}</dd></div>
+              <div><dt>E-posta sağlayıcısı</dt><dd>{emailConfigured ? "Yapılandırılmış · teslimat ölçülmedi" : "Yapılandırılmamış"}</dd></div>
+            </dl>
+          </section>
+          <section class="studio-card">
+            <header class="studio-section-head"><div><h2>Rezervasyon kuralları</h2><p class="studio-muted">Sitede uygulanan çalışma saatleri ve sınırlar.</p></div></header>
+            <dl class="studio-properties">
+              <div><dt>Saat dilimi</dt><dd>{timeZone}</dd></div>
+              <div><dt>Çalışma günleri</dt><dd>{settings.workDays.map((item) => workDayNames[item]).join(", ")}</dd></div>
+              <div><dt>Çalışma saatleri</dt><dd>{workTime(settings.workStartHour)}–{workTime(settings.workEndHour)}</dd></div>
+              <div><dt>Görüşme / tampon</dt><dd>{settings.durationMinutes} dk / {settings.bufferMinutes} dk</dd></div>
+              <div><dt>Talep süresi / ileri tarih sınırı</dt><dd>{settings.leadHours} saat / {settings.horizonDays} gün</dd></div>
+            </dl>
+          </section>
+          {(!ready || !coordinatorConfigured || !emailConfigured) && <section class="studio-card studio-system-alerts">
+            <header class="studio-section-head"><h2>Yönetici uyarıları</h2></header>
+            <ul class="studio-warnings">
+              {!ready && <li>{calendarMessage}</li>}
+              {!coordinatorConfigured && <li>Randevu yazma işlemleri için koordinatör yapılandırması gerekli.</li>}
+              {!emailConfigured && <li>Bildirim e-postası göndermek için sağlayıcı yapılandırması gerekli.</li>}
+            </ul>
+          </section>}
+        </div>
+      )}
+    </div>
+  )}
+</AdminLayout>
+
+<script>
+  const forms =
+    document.querySelectorAll<HTMLFormElement>("[data-reschedule]");
+
+  forms.forEach((form) => {
+    const date = form.querySelector<HTMLInputElement>("[data-date]");
+    const slots = form.querySelector<HTMLSelectElement>("[data-slots]");
+    const hint = form.querySelector<HTMLElement>("[data-hint]");
+    const submit = form.querySelector<HTMLButtonElement>("[data-submit]");
+    const details = form.closest("details");
+
+    if (!date || !slots || !submit || !hint) return;
+
+    let token = 0;
+
+    const load = async (): Promise<void> => {
+      const current = ++token;
+
+      submit.disabled = true;
+      slots.disabled = true;
+      slots.replaceChildren(new Option("Yükleniyor…", ""));
+      hint.textContent = "Müsait saatler kontrol ediliyor…";
+
+      try {
+        const url = new URL("/api/booking", window.location.origin);
+        url.searchParams.set("action", "availability");
+        url.searchParams.set("date", date.value);
+
+        const response = await fetch(url.toString(), {
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
+
+        const data: unknown = await response.json().catch(() => null);
+
+        if (current !== token) return;
+
+        const list =
+          data && typeof data === "object"
+            ? (data as { slots?: unknown }).slots
+            : null;
+
+        if (!Array.isArray(list)) throw new Error("Invalid response");
+
+        const options = list.filter(
+          (slot): slot is { start: string; label: string } =>
+            typeof slot === "object" &&
+            slot !== null &&
+            typeof (slot as { start?: unknown }).start === "string" &&
+            typeof (slot as { label?: unknown }).label === "string"
+        );
+
+        if (options.length === 0) {
+          slots.replaceChildren(new Option("Boş saat yok", ""));
+          hint.textContent =
+            "Bu gün için boş saat yok. Başka bir tarih seçin.";
+          return;
+        }
+
+        slots.replaceChildren(new Option("Saat seçin", ""));
+        options.forEach((slot) => {
+          slots.append(new Option(slot.label, slot.start));
+        });
+        slots.disabled = false;
+        hint.textContent =
+          String(options.length) +
+          " boş saat · 24 saatten yakın saatler listelenmez.";
+      } catch {
+        if (current !== token) return;
+        slots.replaceChildren(new Option("Yüklenemedi", ""));
+        hint.textContent =
+          "Müsaitlik yüklenemedi. Sayfayı yenileyip tekrar deneyin.";
+      }
+    };
+
+    date.addEventListener("change", () => {
+      void load();
+    });
+
+    slots.addEventListener("change", () => {
+      submit.disabled = !slots.value;
+    });
+
+    details?.addEventListener("toggle", () => {
+      if (details.open) void load();
+    });
+  });
+</script>
+
+<script>
+  import { createAdminRefresh } from "../../admin-refresh";
+  import { matchesAppointment } from "../../admin-filters";
+
+  const filters = document.querySelector<HTMLElement>("[data-appointment-filters]");
+  const search = filters?.querySelector<HTMLInputElement>("[data-search]");
+  const bookingStatus = filters?.querySelector<HTMLSelectElement>("[data-status]");
+  const from = filters?.querySelector<HTMLInputElement>("[data-from]");
+  const to = filters?.querySelector<HTMLInputElement>("[data-to]");
+  const groups = [...document.querySelectorAll<HTMLElement>("[data-appointment-group]")].map((group) => ({
+    group,
+    rows: [...group.querySelectorAll<HTMLElement>("[data-appointment]")].map((row) => ({
+      row,
+      status: row.dataset.appointment ?? "",
+      date: row.dataset.dateKey ?? "",
+      name: row.querySelector("[data-booking-name]")?.textContent ?? "",
+      email: row.querySelector("[data-booking-email]")?.textContent ?? "",
+    })),
+  }));
+  if (filters && search && bookingStatus && from && to) {
+    const results = document.querySelector<HTMLElement>("[data-results]");
+    const empty = document.querySelector<HTMLElement>("[data-filter-empty]");
+    const applyFilters = () => {
+      const filter = { search: search.value, status: bookingStatus.value, from: from.value, to: to.value };
+      const invalid = Boolean(filter.from && filter.to && filter.to < filter.from);
+      to.setAttribute("aria-invalid", String(invalid));
+      let count = 0;
+      for (const { group, rows } of groups) {
+        for (const row of rows) row.row.hidden = invalid || !matchesAppointment(row, filter);
+        group.hidden = rows.every(({ row }) => row.hidden);
+        count += rows.filter(({ row }) => !row.hidden).length;
+      }
+      if (results) results.textContent = invalid ? "Bitiş tarihi başlangıçtan önce olamaz." : `${count} randevu`;
+      if (empty) empty.hidden = invalid || count !== 0 || groups.length === 0;
+    };
+    if (window.location.hash === "#pending") bookingStatus.value = "pending";
+    filters.hidden = false;
+    filters.addEventListener("input", applyFilters);
+    filters.addEventListener("change", applyFilters);
+    filters.querySelector("[data-clear]")?.addEventListener("click", () => {
+      search.value = bookingStatus.value = from.value = to.value = "";
+      if (window.location.hash === "#pending") history.replaceState(null, "", window.location.pathname);
+      applyFilters();
+      search.focus();
+    });
+    applyFilters();
+  }
+
+  const live = document.querySelector<HTMLElement>("[data-admin-live]");
+  const status = document.querySelector<HTMLElement>("[data-refresh-status]");
+  const refreshLink = document.querySelector<HTMLAnchorElement>("[data-refresh-link]");
+  document.querySelector<HTMLElement>("[data-operation-feedback]")?.focus();
+
+  document.querySelectorAll<HTMLButtonElement>("[data-dismiss-cancel]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const details = button.closest("details");
+      if (!details) return;
+      details.open = false;
+      details.querySelector("summary")?.focus();
+    });
+  });
+
+  let submitting = false;
+  document.querySelectorAll<HTMLFormElement>('.studio-body form[method="post"]').forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      if (submitting) {
+        event.preventDefault();
+        return;
+      }
+      submitting = true;
+      form.setAttribute("aria-busy", "true");
+      (event as SubmitEvent).submitter?.setAttribute("aria-disabled", "true");
+      const progress = document.createElement("span");
+      progress.setAttribute("role", "status");
+      progress.className = "studio-progress";
+      progress.textContent = "İşlem sürüyor…";
+      form.after(progress);
+    });
+  });
+
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted && submitting) window.location.reload();
+  });
+
+  if (live && status && refreshLink) {
+    const calendarStatus = document.querySelector<HTMLElement>("[data-calendar-status]");
+    const systemCalendar = document.querySelector<HTMLElement>("[data-system-calendar]");
+    const systemChecked = document.querySelector<HTMLElement>("[data-system-checked]");
+    let lastSuccessful = live.dataset.signature ? status.textContent?.trim() ?? "" : "";
+    let timer: number | undefined;
+    let lastActivity = Date.now();
+    const formatter = new Intl.DateTimeFormat("tr-TR", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: live.dataset.timeZone,
+    });
+    const canCheck = () => !submitting && document.visibilityState === "visible" &&
+      !document.querySelector("[data-booking-editor][open]") &&
+      !document.activeElement?.closest("form, [data-appointment-filters]") && Date.now() - lastActivity >= 5_000;
+
+    for (const name of ["pointerdown", "keydown", "input", "change"]) {
+      document.addEventListener(name, () => { lastActivity = Date.now(); }, { passive: true });
+    }
+
+    function showRefreshError(message: string) {
+      status!.textContent = lastSuccessful ? message + " " + lastSuccessful : message;
+    }
+    function showCalendarState(label: string, available: boolean) {
+      if (systemCalendar) systemCalendar.textContent = label;
+      if (!calendarStatus) return;
+      calendarStatus.textContent = label;
+      calendarStatus.classList.toggle("studio-status--good", available);
+      calendarStatus.classList.toggle("studio-status--attention", !available);
+    }
+
+    const refresh = createAdminRefresh({
+      canCheck,
+      async check(manual) {
+        if (manual) status.textContent = "Takvim yenileniyor…";
+        try {
+          const url = manual ? "/api/admin/bookings?refresh=1" : "/api/admin/bookings";
+          const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
+          if (response.status === 401) {
+            window.location.assign("/admin?error=auth");
+            return true;
+          }
+          const data = await response.json();
+          if (!response.ok) {
+            showCalendarState(data.error === "unconfigured" ? "Yapılandırılmamış" : "Takvim okunamadı", false);
+            showRefreshError(data.error === "unconfigured"
+              ? "Google Takvim bağlantısı yapılandırılmamış." : "Takvim yenilenemedi.");
+            return false;
+          }
+          if (typeof data.signature !== "string" || typeof data.checkedAt !== "number") {
+            throw new Error("Invalid refresh response");
+          }
+          lastSuccessful = "Son başarılı güncelleme " + formatter.format(data.checkedAt);
+          status.textContent = lastSuccessful;
+          showCalendarState("Takvim erişilebilir", true);
+          if (systemChecked) systemChecked.textContent = formatter.format(data.checkedAt);
+          if (!submitting && data.signature !== live.dataset.signature && (manual || canCheck())) {
+            try {
+              sessionStorage.setItem("pekmen-admin-scroll", String(window.scrollY));
+            } catch {
+              // Reload still works without storage.
+            }
+            window.location.assign(window.location.pathname + window.location.hash);
+          }
+          return true;
+        } catch {
+          showCalendarState("Takvim durumu doğrulanamadı", false);
+          showRefreshError("Takvim yenilenemedi.");
+          return false;
+        }
+      },
+      schedule(delay) {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => { void refresh(); }, delay);
+      },
+    });
+
+    refreshLink.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      if (!submitting) void refresh(true);
+    });
+    timer = window.setTimeout(() => { void refresh(); }, 45_000);
+
+    if (window.location.search) history.replaceState(null, "", window.location.pathname + window.location.hash);
+    try {
+      const saved = sessionStorage.getItem("pekmen-admin-scroll");
+      if (saved) {
+        sessionStorage.removeItem("pekmen-admin-scroll");
+        requestAnimationFrame(() => window.scrollTo(0, Number(saved) || 0));
+      }
+    } catch {
+      // Storage may be disabled.
+    }
+  }
+</script>

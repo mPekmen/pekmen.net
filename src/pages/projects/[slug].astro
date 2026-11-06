@@ -1,0 +1,126 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import L10n from "../../components/L10n.astro";
+import IconArrow from "../../components/IconArrow.astro";
+import ProjectLinks from "../../components/ProjectLinks.astro";
+import ProjectGallery from "../../components/ProjectGallery.astro";
+import { getNextProject, getProject, projects } from "../../data/projects";
+import { imageSrcSet } from "../../data/images";
+import { langOf, localePath } from "../../i18n/locale";
+import "../../styles/showcase.css";
+
+const lang = langOf(Astro);
+const project = getProject(Astro.params.slug ?? "");
+
+if (!project) {
+  Astro.response.status = 404;
+  return Astro.rewrite("/404");
+}
+
+const next = getNextProject(project.slug);
+const title = `${project.title} — Pekmen`;
+const description = project.short ?? project.summary;
+const total = String(projects.length).padStart(2, "0");
+---
+
+<BaseLayout title={title} titleTr={title} titleDe={title}
+  description={description.en} descriptionTr={description.tr} descriptionDe={description.de}>
+  <article class="case project-detail">
+    <header class="case-head">
+      <div class="container case-head__bar">
+        <a class="back-link" href={localePath(lang, "/projects/")}>
+          <IconArrow direction="left" />
+          <L10n en="All projects" tr="Tüm projeler" de="Alle Projekte" />
+        </a>
+        <span class="label label--muted">{project.index} / {total}</span>
+      </div>
+
+      <div class="container case-head__grid">
+        <div class="case-head__main">
+          <div class="project-detail__eyebrow">
+            <span class="label"><L10n {...project.category} /></span>
+            {project.archived && <span class="project-archive"><L10n en="Archived" tr="Arşivde" de="Archiviert" /></span>}
+          </div>
+          <h1 class="case-head__title">{project.title}</h1>
+          <p class="case-head__tagline"><L10n {...project.tagline} /></p>
+          <ProjectLinks {project} />
+          {project.screens?.length ? (
+            <a class="text-link project-detail__gallery-link" href="#app-screens">
+              <L10n en="View app screens" tr="Uygulama ekranlarına bak" de="App-Ansichten ansehen" />
+              <IconArrow direction="down" />
+            </a>
+          ) : null}
+        </div>
+
+        {project.image && (
+          <figure class="project-cover">
+            <img src={project.image} srcset={imageSrcSet(project.image)}
+              sizes="(min-width: 901px) min(58vw, 860px), 100vw"
+              alt={project.imageAlt[lang]} width="1200" height="675" fetchpriority="high" decoding="async" />
+            <figcaption>
+              <L10n {...(project.imageCaption ?? { en: "Website preview", tr: "Web sitesi önizlemesi", de: "Website-Vorschau" })} />
+              <a class="text-link" href={project.image}>
+                <L10n en="Full size" tr="Tam boy" de="Volle Größe" /> <IconArrow />
+              </a>
+            </figcaption>
+          </figure>
+        )}
+      </div>
+    </header>
+
+    <div class="container case-grid">
+      <aside class="case-facts">
+        <dl class="facts">
+          <div class="facts__row">
+            <dt><L10n en="Year" tr="Yıl" de="Jahr" /></dt>
+            <dd>{project.year}</dd>
+          </div>
+          <div class="facts__row">
+            <dt><L10n en="Role" tr="Rol" de="Rolle" /></dt>
+            <dd><L10n {...project.role} /></dd>
+          </div>
+          <div class="facts__row">
+            <dt><L10n en="Stack" tr="Teknoloji" de="Stack" /></dt>
+            <dd>{project.tags.join(", ")}</dd>
+          </div>
+        </dl>
+      </aside>
+
+      <div class="case-body">
+        <div class="project-detail__intro">
+          <h2 class="label"><L10n en="About the project" tr="Proje hakkında" de="Über das Projekt" /></h2>
+          <p class="case-lead"><L10n {...project.overview} /></p>
+        </div>
+        <ol class="case-notes">
+          {project.sections.map((section, index) => (
+            <li class="case-note">
+              <span class="case-note__no" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+              <div class="case-note__text">
+                <h3 class="case-note__title"><L10n {...section.title} /></h3>
+                <p class="case-note__body"><L10n {...section.body} /></p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+
+    {project.screens?.length ? <ProjectGallery screens={project.screens} source={project.appStore} /> : null}
+
+    <section class="case-next">
+      <div class="container">
+        <a class="case-next__link" href={localePath(lang, `/projects/${next.slug}/`)}>
+          <span class="case-next__label">
+            <L10n en="Next project" tr="Sıradaki proje" de="Nächstes Projekt" />
+            <span aria-hidden="true">{next.index} / {total}</span>
+          </span>
+          <span class="case-next__row">
+            <span class="case-next__title">{next.title}</span>
+            <span class="case-next__arrow" aria-hidden="true"><IconArrow /></span>
+          </span>
+          <span class="case-next__text"><L10n {...(next.short ?? next.summary)} /></span>
+        </a>
+      </div>
+    </section>
+  </article>
+</BaseLayout>

@@ -1,0 +1,116 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import L10n from "../components/L10n.astro";
+import BookingScheduler from "../components/BookingScheduler.astro";
+import { site } from "../data/site";
+import { isBookingConfigured } from "../server/config";
+
+const live = isBookingConfigured();
+---
+
+<BaseLayout
+  title="Book a call — Pekmen"
+  titleTr="Randevu al — Pekmen"
+  titleDe="Termin buchen — Pekmen"
+  description="Book a free 30-minute call with Pekmen. Pick a slot and it lands in both calendars."
+  descriptionTr="Pekmen ile ücretsiz 30 dakikalık görüşme ayarlayın. Bir saat seçin, iki takvime de düşsün."
+  descriptionDe="Buchen Sie ein kostenloses 30-Minuten-Gespräch mit Pekmen. Slot wählen, beide Kalender sind synchron."
+>
+  <section class="page-head">
+    <div class="container">
+      <div class="page-head__top">
+        <span class="label">
+          (Booking) <L10n en="30 minutes" tr="30 dakika" de="30 Minuten" />
+        </span>
+        <span class="label label--muted">
+          <L10n
+            en={live ? "Live availability" : "By request"}
+            tr={live ? "Canlı müsaitlik" : "E-posta ile"}
+            de={live ? "Live-Verfügbarkeit" : "Auf Anfrage"}
+          />
+        </span>
+      </div>
+
+      <div class="page-head__row">
+        <h1><L10n en="Book a call." tr="Randevu al." de="Termin buchen." /></h1>
+
+        <div class="page-head__aside">
+          <p class="page-head__intro">
+            <L10n
+              en="30 minutes, Google Meet, no charge. Pick a slot that works — it lands in my calendar and yours."
+              tr="30 dakika, Google Meet, ücretsiz. Size uyan bir saat seçin — hem benim hem sizin takviminize düşsün."
+              de="30 Minuten, Google Meet, kostenlos. Wählen Sie einen passenden Slot — er landet in beiden Kalendern."
+            />
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="booking-page">
+    <div class="container booking-grid">
+      <div class="contact-details">
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Duration" tr="Süre" de="Dauer" />
+          </span>
+          <p class="contact-details__value">
+            <L10n en="30 minutes" tr="30 dakika" de="30 Minuten" />
+          </p>
+        </div>
+
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Where" tr="Nerede" de="Wo" />
+          </span>
+          <p class="contact-details__value">Google Meet</p>
+        </div>
+
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Time zone" tr="Saat dilimi" de="Zeitzone" />
+          </span>
+          <p class="contact-details__value">
+            <L10n en="Istanbul · GMT+3" tr="İstanbul · GMT+3" de="Istanbul · GMT+3" />
+          </p>
+        </div>
+
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Languages" tr="Diller" de="Sprachen" />
+          </span>
+          <p class="contact-details__value">TR · EN · DE</p>
+        </div>
+
+        <div class="contact-details__block">
+          <span class="contact-details__label">
+            <L10n en="Prefer email?" tr="E-posta mı?" de="Lieber per E-Mail?" />
+          </span>
+          <p class="contact-details__value">
+            <a href={`mailto:${site.email}`}>{site.email}</a>
+          </p>
+        </div>
+
+        <p class="booking-note">
+          {
+            live ? (
+              <L10n
+                en="Bookings write straight to Google Calendar, so the time is confirmed instantly."
+                tr="Randevular doğrudan Google Calendar'a yazılır; saat anında kesinleşir."
+                de="Buchungen werden direkt in Google Calendar geschrieben — die Zeit ist sofort bestätigt."
+              />
+            ) : (
+              <L10n
+                en="Online scheduling is being connected. Until then, a request opens in your email app and I confirm the slot personally."
+                tr="Online takvim bağlanıyor. O zamana kadar istek e-posta uygulamanızda açılır ve saati bizzat onaylarım."
+                de="Die Online-Buchung wird gerade verbunden. Bis dahin öffnet sich die Anfrage in Ihrem E-Mail-Programm, und ich bestätige den Slot persönlich."
+              />
+            )
+          }
+        </p>
+      </div>
+
+      <BookingScheduler live={live} />
+    </div>
+  </section>
+</BaseLayout>

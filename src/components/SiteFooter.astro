@@ -1,0 +1,143 @@
+---
+import L10n from "./L10n.astro";
+import IconArrow from "./IconArrow.astro";
+import { site } from "../data/site";
+import { langOf, localePath } from "../i18n/locale";
+
+const lang = langOf(Astro);
+---
+
+<footer class="site-footer" id="site-footer">
+  <div class="container">
+    <div class="footer__cta">
+      <div class="footer__cta-top">
+        <span class="label">
+          (05) <L10n en="Contact" tr="İletişim" de="Kontakt" />
+        </span>
+
+        <p class="footer__status">
+          <span class="footer__dot" aria-hidden="true"></span>
+          <L10n
+            en="Available for new work"
+            tr="Yeni işlere açık"
+            de="Offen für neue Projekte"
+          />
+        </p>
+      </div>
+
+      <div class="footer__cta-body">
+        <h2 class="footer__headline">
+          <L10n
+            en="Have something in mind?"
+            tr="Aklınızda bir şey mi var?"
+            de="Etwas im Kopf?"
+          />
+          <br />
+          <a href={localePath(lang, "/contact")}>
+            <L10n en="Let's talk." tr="Konuşalım." de="Sprechen wir." />
+          </a>
+        </h2>
+
+        <a class="footer__mail" href={`mailto:${site.email}`}>
+          {site.email}
+          <IconArrow />
+        </a>
+      </div>
+    </div>
+
+    <div class="footer__meta">
+      <div class="footer__brand">
+        <a class="brand" href={localePath(lang, "/")} aria-label={`${site.name} — home`}>
+          {site.name}<span class="brand__dot" aria-hidden="true">.</span>
+        </a>
+        <p>
+          <L10n
+            en="Full-stack developer and infrastructure tinkerer. I build fast, quiet products — and the systems they run on."
+            tr="Full-stack geliştirici ve altyapı meraklısı. Hızlı, sade ürünler ve arkalarındaki sistemleri kuruyorum."
+            de="Full-Stack-Entwickler und Infrastruktur-Tüftler. Ich baue schnelle, leise Produkte — und die Systeme dahinter."
+          />
+        </p>
+      </div>
+
+      <nav class="footer__col" aria-label="Footer">
+        <h2><L10n en="Sitemap" tr="Sayfalar" de="Seiten" /></h2>
+        <a href={localePath(lang, "/projects")}><L10n en="Work" tr="Projeler" de="Arbeiten" /></a>
+        <a href={localePath(lang, "/blog")}><L10n en="Writing" tr="Yazılar" de="Notizen" /></a>
+        <a href={localePath(lang, "/about")}><L10n en="About" tr="Hakkında" de="Über" /></a>
+        <a href={localePath(lang, "/contact")}><L10n en="Contact" tr="İletişim" de="Kontakt" /></a>
+        <a href={localePath(lang, "/appointment")}>
+          <L10n en="Book a call" tr="Randevu al" de="Termin buchen" />
+        </a>
+        <a href={localePath(lang, "/privacy")}><L10n en="Privacy" tr="Gizlilik" de="Datenschutz" /></a>
+        <a href={localePath(lang, "/terms")}><L10n en="Terms" tr="Koşullar" de="Bedingungen" /></a>
+      </nav>
+
+      <div class="footer__col">
+        <h2><L10n en="Elsewhere" tr="Bağlantılar" de="Anderswo" /></h2>
+        {site.socials.map((social) => (
+          <a href={social.href} target="_blank" rel="noreferrer noopener">
+            {social.label}
+            <IconArrow class="footer__ext" />
+          </a>
+        ))}
+      </div>
+
+      <div class="footer__col">
+        <h2><L10n en="Studio" tr="Stüdyo" de="Studio" /></h2>
+        <p>{site.locationShort}</p>
+        <p class="footer__clock-row">
+          <time class="footer__clock" data-clock datetime="">--:--</time>
+          <span>GMT+3</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <span>© {new Date().getFullYear()} {site.name}</span>
+      <a class="footer__top" href="#" data-to-top>
+        <L10n en="Back to top" tr="Başa dön" de="Nach oben" />
+        <IconArrow />
+      </a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const clocks = document.querySelectorAll<HTMLTimeElement>("[data-clock]");
+
+  if (clocks.length) {
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Istanbul",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    const tick = () => {
+      const now = new Date();
+      const time = formatter.format(now);
+      clocks.forEach((clock) => {
+        clock.textContent = time;
+        clock.setAttribute("datetime", now.toISOString());
+      });
+    };
+
+    tick();
+    window.setInterval(tick, 30_000);
+  }
+
+  const toTop = document.querySelector<HTMLAnchorElement>("[data-to-top]");
+
+  toTop?.addEventListener("click", (event) => {
+    event.preventDefault();
+    window.scrollTo({
+      top: 0,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
+    document
+      .querySelector<HTMLElement>(".site-header .brand")
+      ?.focus({ preventScroll: true });
+  });
+</script>

@@ -1,0 +1,40 @@
+---
+import type { ProjectScreen } from "../data/projects";
+import { langOf } from "../i18n/locale";
+import IconArrow from "./IconArrow.astro";
+import L10n from "./L10n.astro";
+
+interface Props {
+  screens: ProjectScreen[];
+  source?: string;
+}
+
+const { screens, source } = Astro.props;
+const lang = langOf(Astro);
+---
+
+<section class="project-gallery" id="app-screens" aria-labelledby="project-gallery-title">
+  <div class="container project-gallery__layout">
+    <header>
+      <p class="label label--muted"><L10n en="Gallery" tr="Galeri" de="Galerie" /></p>
+      <h2 id="project-gallery-title"><L10n en="App screens." tr="Uygulama ekranları." de="App-Ansichten." /></h2>
+      {source && (
+        <a class="text-link" href={source}>
+          <L10n en="Official App Store previews" tr="Resmî App Store görselleri" de="Offizielle App-Store-Vorschauen" />
+          <IconArrow />
+        </a>
+      )}
+    </header>
+    <div class="project-gallery__screens">
+      {screens.map((screen) => (
+        <figure>
+          <a href={screen.src}>
+            <img src={screen.src} srcset={screen.srcset} sizes="(min-width: 620px) 270px, min(80vw, 270px)"
+              alt={screen.alt[lang]} width={screen.width} height={screen.height} loading="lazy" decoding="async" />
+          </a>
+          <figcaption>{screen.caption[lang]}</figcaption>
+        </figure>
+      ))}
+    </div>
+  </div>
+</section>

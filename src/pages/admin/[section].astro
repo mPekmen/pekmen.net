@@ -1,0 +1,14 @@
+---
+import AdminWorkspace from "../../components/admin/AdminWorkspace.astro";
+import { ADMIN_COOKIE, verifySessionToken } from "../../server/admin";
+
+export const prerender = false;
+const section = Astro.params.section;
+if (section !== "appointments" && section !== "system") {
+  return new Response("Not found", { status: 404 });
+}
+if (!verifySessionToken(Astro.cookies.get(ADMIN_COOKIE)?.value)) {
+  return Astro.redirect("/admin", 303);
+}
+---
+<AdminWorkspace {section} />

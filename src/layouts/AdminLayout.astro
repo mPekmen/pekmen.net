@@ -1,0 +1,66 @@
+---
+import "@fontsource-variable/inter-tight";
+import "../styles/global.css";
+import "../styles/admin.css";
+
+interface Props {
+  title: string;
+  section?: "overview" | "appointments" | "system";
+  logoutToken?: string;
+}
+
+const { title, section, logoutToken } = Astro.props;
+const sections = [
+  { id: "overview", label: "Overview", href: "/admin", icon: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z" },
+  { id: "appointments", label: "Appointments", href: "/admin/appointments", icon: "M4 6h16v15H4z M4 10h16 M8 3v5 M16 3v5 M8 14h3 M13 14h3 M8 17h3" },
+  { id: "system", label: "System", href: "/admin/system", icon: "M3 5h18v6H3z M3 13h18v6H3z M7 8h1 M7 16h1" },
+];
+---
+
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#f5f2eb" />
+    <meta name="color-scheme" content="light" />
+    <title>{title}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+
+  <body class="studio-body">
+    {section ? (
+      <div class="studio-shell">
+        <a class="studio-skip" href="#studio-main">İçeriğe geç</a>
+        <aside class="studio-sidebar">
+          <a href="/admin" class="studio-brand">
+            <span class="studio-mark" aria-hidden="true">P.</span>
+            <span>Pekmen Studio<small>Yönetim paneli</small></span>
+          </a>
+          <nav class="studio-nav" aria-label="Yönetim bölümleri">
+            {sections.map((item) => (
+              <a href={item.href} aria-current={section === item.id ? "page" : undefined}>
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d={item.icon} /></svg>
+                <span lang="en">{item.label}</span>
+              </a>
+            ))}
+          </nav>
+          <div class="studio-account">
+            <a href="/" class="studio-site">Siteye dön <span aria-hidden="true">↗</span></a>
+            <form method="post" action="/api/admin/logout">
+              <input type="hidden" name="csrf" value={logoutToken} />
+              <button type="submit">Çıkış yap</button>
+            </form>
+          </div>
+        </aside>
+        <main class="studio-main" id="studio-main" tabindex="-1"><slot /></main>
+      </div>
+    ) : (
+      <main class="studio-login" id="studio-main">
+        <header><a class="studio-brand" href="/"><span class="studio-mark" aria-hidden="true">P.</span> Pekmen Studio</a><a href="/">Siteye dön</a></header>
+        <slot />
+      </main>
+    )}
+  </body>
+</html>

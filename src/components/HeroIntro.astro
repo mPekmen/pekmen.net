@@ -1,0 +1,34 @@
+---
+import L10n from "./L10n.astro";
+import IconArrow from "./IconArrow.astro";
+import { langOf, localePath } from "../i18n/locale";
+
+const lang = langOf(Astro);
+---
+
+<div class="hero__main">
+  <div class="hero__heading">
+    <h1 class="hero__title">
+      <L10n en="Hi, I'm Pekmen." tr="Merhaba, ben Pekmen." de="Hallo, ich bin Pekmen." />
+    </h1>
+
+    <p class="hero__sub">
+      <L10n
+        en="I build digital products."
+        tr="Dijital ürünler geliştiriyorum."
+        de="Ich baue digitale Produkte."
+      />
+    </p>
+  </div>
+
+  <div class="hero__actions">
+    <a class="btn btn--green" href={localePath(lang, "/projects")}>
+      <L10n en="Selected work" tr="Seçili işler" de="Ausgewählte Arbeiten" />
+      <IconArrow />
+    </a>
+    <a class="btn btn--outline" href={localePath(lang, "/contact")}>
+      <L10n en="Start a project" tr="Bir iş başlat" de="Projekt starten" />
+      <IconArrow />
+    </a>
+  </div>
+</div>

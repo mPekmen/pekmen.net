@@ -1,0 +1,55 @@
+---
+import L10n from "./L10n.astro";
+import IconArrow from "./IconArrow.astro";
+import HeroIntro from "./HeroIntro.astro";
+import SignatureMark from "./SignatureMark.astro";
+import { site } from "../data/site";
+import { projects } from "../data/projects";
+import { langOf, localePath } from "../i18n/locale";
+
+const lang = langOf(Astro);
+const latest = projects.find((project) => project.slug === "boyaci") ?? projects[0];
+---
+
+<section class="hero">
+  <div class="container hero__inner">
+    <HeroIntro />
+
+    <aside class="hero__panel">
+      <SignatureMark />
+
+      <div class="hero__panel-work">
+        <span class="hero__panel-label">
+          <L10n en="Latest work" tr="Son iş" de="Letzte Arbeit" />
+        </span>
+
+        <a class="hero__panel-link" href={localePath(lang, `/projects/${latest.slug}/`)}>
+          <span class="hero__panel-title">{latest.title}</span>
+          <span class="hero__panel-year">{latest.year}</span>
+          <IconArrow />
+        </a>
+
+        <p class="hero__panel-summary">
+          <L10n en={latest.summary.en} tr={latest.summary.tr} de={latest.summary.de} />
+        </p>
+      </div>
+
+      <div class="hero__panel-foot">
+        <span class="hero__panel-where">
+          <span class="hero__panel-dot" aria-hidden="true"></span>
+          {site.locationShort}
+          <time data-clock datetime="">--:--</time>
+        </span>
+
+        <span class="hero__panel-links">
+          {site.socials.map((social) => (
+            <a href={social.href} target="_blank" rel="me noopener">
+              {social.label}
+            </a>
+          ))}
+          <a href={`mailto:${site.email}`}>E-mail</a>
+        </span>
+      </div>
+    </aside>
+  </div>
+</section>

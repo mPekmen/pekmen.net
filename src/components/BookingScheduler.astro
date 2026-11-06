@@ -1,0 +1,1188 @@
+---
+import L10n from "./L10n.astro";
+import IconArrow from "./IconArrow.astro";
+import { site } from "../data/site";
+import { langOf, pick } from "../i18n/locale";
+
+interface Props {
+  live?: boolean;
+  endpoint?: string;
+}
+
+const lang = langOf(Astro);
+const live = Astro.props.live ?? true;
+
+const endpoint = live ? (Astro.props.endpoint ?? "/api/booking").trim() : "";
+
+const submitLabel = endpoint
+  ? { en: "Confirm booking", tr: "Randevuyu onayla", de: "Termin bestätigen" }
+  : {
+      en: "Request this time",
+      tr: "Bu saati talep et",
+      de: "Diese Zeit anfragen",
+    };
+---
+
+<div
+  class="scheduler"
+  data-scheduler
+  data-endpoint={endpoint}
+  data-email={site.email}
+  data-timezone="Europe/Istanbul"
+>
+  <noscript>
+    <p class="scheduler__note">
+      <L10n
+        en="Online booking needs JavaScript. You can also write to"
+        tr="Online randevu için JavaScript gerekir. Doğrudan şu adrese de yazabilirsiniz:"
+        de="Die Online-Buchung benötigt JavaScript. Sie können auch direkt schreiben an"
+      />
+      <a href={`mailto:${site.email}`}>{site.email}</a>.
+    </p>
+  </noscript>
+
+  <div data-picker class="scheduler__picker">
+    <p class="scheduler__note scheduler__note--lead">
+      {
+        endpoint ? (
+          <L10n
+            en="Times come straight from Google Calendar. Booking confirms instantly and creates a Google Meet link."
+            tr="Saatler doğrudan Google Calendar'dan geliyor. Onay anında kesinleşir ve Google Meet bağlantısı oluşur."
+            de="Die Zeiten kommen direkt aus Google Calendar. Die Buchung ist sofort bestätigt und erstellt einen Google-Meet-Link."
+          />
+        ) : (
+          <L10n
+            en="Live scheduling isn't connected yet. Pick a time and send the request — I'll confirm by email."
+            tr="Canlı takvim henüz bağlı değil. Bir saat seçip isteği gönderin — e-posta ile onaylayayım."
+            de="Die Live-Buchung ist noch nicht verbunden. Wählen Sie eine Zeit und senden Sie die Anfrage — ich bestätige per E-Mail."
+          />
+        )
+      }
+    </p>
+
+    <div class="scheduler__cols">
+      <section class="calendar" aria-labelledby="calendar-title">
+        <header class="calendar__head">
+          <div class="calendar__title-wrap">
+            <span class="label">
+              (01) <L10n en="Pick a day" tr="Gün seçin" de="Tag wählen" />
+            </span>
+            <h2 class="calendar__title" id="calendar-title" data-month-label>
+              —
+            </h2>
+          </div>
+
+          <div class="calendar__nav">
+            <button
+              type="button"
+              data-month="-1"
+              aria-label={pick(lang, "Previous month", "Önceki ay", "Vorheriger Monat")}
+            >
+              <IconArrow direction="left" />
+            </button>
+            <button
+              type="button"
+              data-month="1"
+              aria-label={pick(lang, "Next month", "Sonraki ay", "Nächster Monat")}
+            >
+              <IconArrow direction="right" />
+            </button>
+          </div>
+        </header>
+
+        <div class="calendar__weekdays" data-weekdays aria-hidden="true"></div>
+
+        <div
+          class="calendar__grid"
+          data-calendar
+          role="group"
+          aria-label={pick(lang, "Choose a day", "Bir gün seçin", "Tag auswählen")}
+        ></div>
+
+        <p class="calendar__legend">
+          <span class="calendar__legend-dot" aria-hidden="true"></span>
+          <L10n en="Has open times" tr="Boş saat var" de="Freie Zeiten" />
+        </p>
+      </section>
+
+      <section class="times" aria-labelledby="times-title">
+        <header class="times__head">
+          <span class="label">
+            (02) <L10n en="Pick a time" tr="Saat seçin" de="Uhrzeit wählen" />
+          </span>
+          <h2 class="times__title" id="times-title" data-selected-day>—</h2>
+        </header>
+
+        <div
+          class="slots"
+          data-slots
+          role="group"
+          aria-label={pick(lang, "Choose a time", "Bir saat seçin", "Uhrzeit auswählen")}
+        ></div>
+
+        <p class="scheduler__note">
+          <L10n
+            en="All times are Istanbul time (GMT+3)."
+            tr="Tüm saatler İstanbul saatidir (GMT+3)."
+            de="Alle Zeiten sind Istanbuler Zeit (GMT+3)."
+          />
+        </p>
+      </section>
+    </div>
+
+    <form class="scheduler__form" data-booking-form novalidate hidden>
+      <div class="scheduler__head">
+        <span class="label">
+          (03) <L10n en="Your details" tr="Bilgileriniz" de="Ihre Angaben" />
+        </span>
+        <span class="scheduler__selected" data-selected-slot></span>
+      </div>
+
+      <div class="form__row">
+        <div class="field">
+          <label for="booking-name"><L10n en="Name" tr="Ad" de="Name" /></label>
+          <input
+            id="booking-name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            required
+            aria-describedby="booking-status"
+            placeholder={pick(lang, "Your name", "Adınız", "Ihr Name")}
+          />
+        </div>
+
+        <div class="field">
+          <label for="booking-email">
+            <L10n en="Email" tr="E-posta" de="E-Mail" />
+          </label>
+          <input
+            id="booking-email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            aria-describedby="booking-status"
+            placeholder={pick(lang, "you@example.com", "siz@ornek.com", "sie@beispiel.com")}
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="booking-note">
+          <L10n
+            en="Note (optional)"
+            tr="Not (isteğe bağlı)"
+            de="Notiz (optional)"
+          />
+        </label>
+        <textarea
+          id="booking-note"
+          name="note"
+          rows="3"
+          placeholder={pick(
+            lang,
+            "Anything I should know?",
+            "Bilmem gereken bir şey var mı?",
+            "Gibt es etwas, das ich wissen sollte?",
+          )}
+        ></textarea>
+      </div>
+
+      <input
+        class="honeypot"
+        type="text"
+        name="company"
+        tabindex="-1"
+        autocomplete="off"
+        aria-hidden="true"
+      />
+
+      <p class="scheduler__note">
+        <L10n
+          en="No payment, no account. You'll get a calendar invitation."
+          tr="Ödeme yok, hesap yok. Takvim daveti alacaksınız."
+          de="Keine Zahlung, kein Konto. Sie erhalten eine Kalendereinladung."
+        />
+      </p>
+
+      <div class="form__foot">
+        <button class="btn btn--green" type="submit" data-booking-submit>
+          <span data-booking-submit-text>
+            {pick(lang, submitLabel.en, submitLabel.tr, submitLabel.de)}
+          </span>
+          <IconArrow />
+        </button>
+      </div>
+    </form>
+
+    <p
+      class="scheduler__status"
+      id="booking-status"
+      data-booking-status
+      role="status"
+      aria-live="polite"
+    ></p>
+  </div>
+
+  <div class="scheduler__done" data-done tabindex="-1" hidden>
+    <span class="label"
+      >(04) <L10n en="Booking" tr="Randevu" de="Termin" /></span
+    >
+    <h2 data-done-title></h2>
+
+    <div class="scheduler__summary">
+      <strong data-done-when></strong>
+      <span data-done-where></span>
+    </div>
+
+    <p data-done-note></p>
+
+    <div class="scheduler__done-actions">
+      <a
+        class="btn btn--green"
+        data-done-meet
+        href="#"
+        target="_blank"
+        rel="noreferrer noopener"
+        hidden
+      >
+        Google Meet
+        <IconArrow />
+      </a>
+      <a
+        class="btn btn--outline"
+        data-done-calendar
+        href="#"
+        target="_blank"
+        rel="noreferrer noopener"
+        hidden
+      >
+        <L10n en="Add to calendar" tr="Takvime ekle" de="Zum Kalender" />
+        <IconArrow />
+      </a>
+      <button class="text-link" type="button" data-done-reset>
+        <L10n
+          en="Book another time"
+          tr="Yeni randevu"
+          de="Weiteren Termin buchen"
+        />
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  type Lang = "en" | "tr" | "de";
+
+  type Slot = {
+    start: string;
+    label: string;
+  };
+
+  type Booking = {
+    dayLabel: string;
+    label: string;
+    start: string;
+    meetLink: string;
+    calendarLink: string;
+    status: "pending" | "confirmed";
+  };
+
+  const TIME_ZONE = "Europe/Istanbul";
+  const LOCALES: Record<Lang, string> = {
+    en: "en-GB",
+    tr: "tr-TR",
+    de: "de-DE",
+  };
+
+  const MESSAGES: Record<Lang, Record<string, string>> = {
+    en: {
+      loading: "Checking availability…",
+      noSlots: "No open slots on this day. Try another day or write to",
+      loadError: "Availability didn't load. Try again or write to",
+      monthEmpty: "No open days this month. Try the next one or write to",
+      required: "Please add your name and email.",
+      emailInvalid: "Please enter a valid email address.",
+      slotRequired: "Pick a time first.",
+      sending: "Sending request…",
+      submit: "Request this time",
+      submitLive: "Confirm booking",
+      taken: "That time was just taken. Pick another slot.",
+      checkingBooking: "We’re still checking this request. Try again shortly using the same details.",
+      error: "Something went wrong. Please try again, or email me directly.",
+      mailto: "Your email app should open with the request ready to send.",
+      doneTitle: "You're booked.",
+      doneNote:
+        "The invitation is on its way to your inbox, and the meeting link is in the calendar event.",
+      doneWhere: "Google Meet · 30 minutes · Istanbul time",
+      doneTitlePending: "Request sent.",
+      doneNotePending:
+        "The time is held for you. I'll confirm by email shortly — you don't need to do anything else.",
+      doneWherePending:
+        "Google Meet · 30 minutes · Istanbul time · awaiting confirmation",
+      bookAnother: "Book another time",
+      mailSubject: "Call request",
+      mailGreeting: "Hi Pekmen,",
+      mailWhen: "Preferred time",
+      mailName: "Name",
+      mailEmail: "Email",
+      mailNote: "Note",
+      mailClose: "Please confirm if this works for you.",
+      freeLabel: "open times",
+    },
+    tr: {
+      loading: "Müsait saatler kontrol ediliyor…",
+      noSlots: "Bu gün için boş saat yok. Başka bir gün seçin veya şu adrese yazın:",
+      loadError:
+        "Müsait saatler yüklenemedi. Tekrar deneyin veya şu adrese yazın:",
+      monthEmpty: "Bu ay boş gün yok. Sonraki aya bakın veya şu adrese yazın:",
+      required: "Lütfen adınızı ve e-postanızı yazın.",
+      emailInvalid: "Geçerli bir e-posta adresi yazın.",
+      slotRequired: "Önce bir saat seçin.",
+      sending: "Randevu isteği gönderiliyor…",
+      submit: "Bu saati talep et",
+      submitLive: "Randevuyu onayla",
+      taken: "O saat az önce doldu. Başka bir saat seçin.",
+      checkingBooking: "Talebinizi hâlâ kontrol ediyoruz. Biraz sonra aynı bilgilerle tekrar deneyin.",
+      error:
+        "Bir şeyler ters gitti. Tekrar deneyin veya doğrudan e-posta yazın.",
+      mailto: "E-posta uygulamanız istek hazır şekilde açılmalı.",
+      doneTitle: "Randevunuz onaylandı.",
+      doneNote:
+        "Davet e-postanıza gidiyor; görüşme bağlantısı takvim etkinliğinin içinde.",
+      doneWhere: "Google Meet · 30 dakika · İstanbul saati",
+      doneTitlePending: "Talebiniz alındı.",
+      doneNotePending:
+        "Saat sizin için ayrıldı. Kısa süre içinde e-posta ile onaylayacağım; başka bir şey yapmanıza gerek yok.",
+      doneWherePending:
+        "Google Meet · 30 dakika · İstanbul saati · onay bekliyor",
+      bookAnother: "Yeni randevu",
+      mailSubject: "Görüşme isteği",
+      mailGreeting: "Merhaba Pekmen,",
+      mailWhen: "Tercih ettiğim saat",
+      mailName: "Ad",
+      mailEmail: "E-posta",
+      mailNote: "Not",
+      mailClose: "Bu saat sizin için uygunsa onaylayabilir misiniz?",
+      freeLabel: "boş saat",
+    },
+    de: {
+      loading: "Verfügbarkeit wird geprüft…",
+      noSlots:
+        "An diesem Tag ist nichts frei. Bitte einen anderen Tag wählen oder schreiben an",
+      loadError:
+        "Verfügbarkeit konnte nicht geladen werden. Bitte erneut versuchen oder schreiben an",
+      monthEmpty:
+        "In diesem Monat ist nichts frei. Bitte den nächsten versuchen oder schreiben an",
+      required: "Bitte Name und E-Mail-Adresse angeben.",
+      emailInvalid: "Bitte eine gültige E-Mail-Adresse eingeben.",
+      slotRequired: "Bitte zuerst eine Uhrzeit wählen.",
+      sending: "Anfrage wird gesendet…",
+      submit: "Diese Zeit anfragen",
+      submitLive: "Termin bestätigen",
+      taken: "Diese Zeit wurde gerade vergeben. Bitte eine andere wählen.",
+      checkingBooking: "Wir prüfen Ihre Anfrage noch. Versuchen Sie es gleich mit denselben Angaben erneut.",
+      error:
+        "Etwas ist schiefgelaufen. Bitte erneut versuchen oder direkt schreiben.",
+      mailto:
+        "Ihr E-Mail-Programm sollte sich mit der fertigen Anfrage öffnen.",
+      doneTitle: "Ihr Termin steht.",
+      doneNote:
+        "Die Einladung ist auf dem Weg in Ihr Postfach; der Meeting-Link steht im Kalendereintrag.",
+      doneWhere: "Google Meet · 30 Minuten · Istanbuler Zeit",
+      doneTitlePending: "Anfrage erhalten.",
+      doneNotePending:
+        "Die Zeit ist für Sie reserviert. Ich bestätige in Kürze per E-Mail — Sie müssen nichts weiter tun.",
+      doneWherePending:
+        "Google Meet · 30 Minuten · Istanbuler Zeit · Bestätigung ausstehend",
+      bookAnother: "Weiteren Termin buchen",
+      mailSubject: "Terminanfrage",
+      mailGreeting: "Hallo Pekmen,",
+      mailWhen: "Wunschzeit",
+      mailName: "Name",
+      mailEmail: "E-Mail",
+      mailNote: "Notiz",
+      mailClose: "Bitte bestätigen Sie kurz, ob die Zeit passt.",
+      freeLabel: "freie Zeiten",
+    },
+  };
+
+  const pad = (value: number): string => String(value).padStart(2, "0");
+
+  const scheduler = document.querySelector<HTMLElement>("[data-scheduler]");
+
+  if (scheduler) {
+    const endpoint = (scheduler.dataset.endpoint ?? "").trim();
+    const email = scheduler.dataset.email ?? "";
+
+    const picker = scheduler.querySelector<HTMLElement>("[data-picker]");
+    const done = scheduler.querySelector<HTMLElement>("[data-done]");
+    const calendarEl = scheduler.querySelector<HTMLElement>("[data-calendar]");
+    const weekdaysEl = scheduler.querySelector<HTMLElement>("[data-weekdays]");
+    const monthLabel = scheduler.querySelector<HTMLElement>("[data-month-label]");
+    const slotsEl = scheduler.querySelector<HTMLElement>("[data-slots]");
+    const form = scheduler.querySelector<HTMLFormElement>("[data-booking-form]");
+    const status = scheduler.querySelector<HTMLElement>("[data-booking-status]");
+    const submit =
+      scheduler.querySelector<HTMLButtonElement>("[data-booking-submit]");
+    const submitText = scheduler.querySelector<HTMLElement>(
+      "[data-booking-submit-text]"
+    );
+    const selectedDayEl =
+      scheduler.querySelector<HTMLElement>("[data-selected-day]");
+    const selectedSlotEl =
+      scheduler.querySelector<HTMLElement>("[data-selected-slot]");
+    const nameField =
+      form?.querySelector<HTMLInputElement>('input[name="name"]') ?? null;
+    const emailField =
+      form?.querySelector<HTMLInputElement>('input[name="email"]') ?? null;
+    const noteField =
+      form?.querySelector<HTMLTextAreaElement>('textarea[name="note"]') ?? null;
+    const doneTitle = scheduler.querySelector<HTMLElement>("[data-done-title]");
+    const doneWhen = scheduler.querySelector<HTMLElement>("[data-done-when]");
+    const doneWhere = scheduler.querySelector<HTMLElement>("[data-done-where]");
+    const doneNote = scheduler.querySelector<HTMLElement>("[data-done-note]");
+    const doneMeet =
+      scheduler.querySelector<HTMLAnchorElement>("[data-done-meet]");
+    const doneCalendar = scheduler.querySelector<HTMLAnchorElement>(
+      "[data-done-calendar]"
+    );
+    const doneReset =
+      scheduler.querySelector<HTMLButtonElement>("[data-done-reset]");
+
+    if (
+      picker &&
+      done &&
+      calendarEl &&
+      weekdaysEl &&
+      monthLabel &&
+      slotsEl &&
+      form &&
+      status &&
+      selectedDayEl &&
+      selectedSlotEl
+    ) {
+      const lang = (): Lang => {
+        const value = document.documentElement.lang;
+        return value === "tr" || value === "de" ? value : "en";
+      };
+
+      const copy = (key: string): string =>
+        MESSAGES[lang()][key] ?? MESSAGES.en[key] ?? "";
+
+      const longDayFormat = () =>
+        new Intl.DateTimeFormat(LOCALES[lang()], {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          timeZone: "UTC",
+        });
+
+      const monthFormat = () =>
+        new Intl.DateTimeFormat(LOCALES[lang()], {
+          month: "long",
+          year: "numeric",
+          timeZone: "UTC",
+        });
+
+      const weekdayFormat = () =>
+        new Intl.DateTimeFormat(LOCALES[lang()], {
+          weekday: "short",
+          timeZone: "UTC",
+        });
+
+      const dayLabel = (key: string): string =>
+        longDayFormat().format(new Date(`${key}T12:00:00Z`));
+
+      const keyOf = (date: Date): string =>
+        `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(
+          date.getUTCDate()
+        )}`;
+
+      const monthKeyOf = (date: Date): string =>
+        `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}`;
+
+      const todayInZone = (): Date => {
+        const parts = new Intl.DateTimeFormat("en-GB", {
+          timeZone: TIME_ZONE,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).formatToParts(new Date());
+
+        const read = (type: string): number =>
+          Number(parts.find((part) => part.type === type)?.value ?? 0);
+
+        return new Date(
+          Date.UTC(read("year"), read("month") - 1, read("day"), 12)
+        );
+      };
+
+      const today = todayInZone();
+      const todayKey = keyOf(today);
+      const currentMonth = new Date(
+        Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1, 12)
+      );
+
+      let viewMonth = new Date(currentMonth);
+      let selectedDay = "";
+      let selectedSlot: Slot | null = null;
+      let slots: Slot[] = [];
+      let counts = new Map<string, number>();
+      let autoSkip = true;
+      let slotState: "ready" | "loading" | "error" = "ready";
+      let loadToken = 0;
+      let monthToken = 0;
+      let busy = false;
+      let statusKey: string | null = null;
+      let statusState: "idle" | "success" | "error" = "idle";
+
+      const monthIndex = (date: Date): number =>
+        date.getUTCFullYear() * 12 + date.getUTCMonth();
+
+      const addMonths = (date: Date, amount: number): Date =>
+        new Date(
+          Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + amount, 1, 12)
+        );
+
+      const fallbackSlots = (key: string): Slot[] => {
+        const date = new Date(`${key}T12:00:00Z`);
+        const weekday = date.getUTCDay();
+
+        if (weekday === 0 || weekday === 6) return [];
+
+        const result: Slot[] = [];
+        const earliest = Date.now() + 60 * 60 * 1000;
+
+        for (let minutes = 10 * 60; minutes <= 17 * 60 + 30; minutes += 30) {
+          const hours = pad(Math.floor(minutes / 60));
+          const mins = pad(minutes % 60);
+          const start = `${key}T${hours}:${mins}:00+03:00`;
+
+          if (new Date(start).getTime() <= earliest) continue;
+
+          result.push({ start, label: `${hours}:${mins}` });
+        }
+
+        return result;
+      };
+
+      const slotLabel = (start: string): string => {
+        const date = new Date(start);
+
+        if (Number.isNaN(date.getTime())) return start.slice(11, 16);
+
+        return new Intl.DateTimeFormat("en-GB", {
+          timeZone: TIME_ZONE,
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }).format(date);
+      };
+
+      const emptyState = (text: string): HTMLElement => {
+        const paragraph = document.createElement("p");
+        paragraph.className = "slots__empty";
+        paragraph.textContent = `${text} `;
+
+        const link = document.createElement("a");
+        link.href = `mailto:${email}`;
+        link.textContent = email;
+        paragraph.append(link);
+
+        return paragraph;
+      };
+
+      const renderWeekdays = (): void => {
+        weekdaysEl.replaceChildren();
+        const formatter = weekdayFormat();
+
+        for (let index = 0; index < 7; index += 1) {
+          const date = new Date(Date.UTC(2024, 0, 1 + index, 12));
+          const cell = document.createElement("span");
+          cell.className = "calendar__weekday";
+          cell.textContent = formatter.format(date);
+          weekdaysEl.append(cell);
+        }
+      };
+
+      const renderCalendar = (): void => {
+        monthLabel.textContent = monthFormat().format(viewMonth);
+        calendarEl.replaceChildren();
+
+        const year = viewMonth.getUTCFullYear();
+        const month = viewMonth.getUTCMonth();
+        const firstWeekday = (viewMonth.getUTCDay() + 6) % 7;
+        const totalDays = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+
+        for (let blank = 0; blank < firstWeekday; blank += 1) {
+          const spacer = document.createElement("span");
+          spacer.className = "calendar__day calendar__day--empty";
+          spacer.setAttribute("aria-hidden", "true");
+          calendarEl.append(spacer);
+        }
+
+        for (let day = 1; day <= totalDays; day += 1) {
+          const date = new Date(Date.UTC(year, month, day, 12));
+          const key = keyOf(date);
+          const count = counts.get(key) ?? 0;
+          const isPast = key < todayKey;
+          const isOpen = count > 0 && !isPast;
+
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "calendar__day";
+          button.dataset.day = key;
+          button.disabled = !isOpen;
+          button.setAttribute("aria-pressed", String(key === selectedDay));
+          button.setAttribute(
+            "aria-label",
+            `${longDayFormat().format(date)}${
+              isOpen ? ` — ${count} ${copy("freeLabel")}` : ""
+            }`
+          );
+
+          const number = document.createElement("span");
+          number.className = "calendar__num";
+          number.textContent = String(day);
+
+          const dot = document.createElement("span");
+          dot.className = "calendar__dot";
+          dot.hidden = !isOpen;
+          dot.setAttribute("aria-hidden", "true");
+
+          if (key === todayKey) button.classList.add("is-today");
+
+          button.append(number, dot);
+          calendarEl.append(button);
+        }
+
+        const nav = scheduler.querySelectorAll<HTMLButtonElement>("[data-month]");
+        nav.forEach((button) => {
+          const direction = Number(button.dataset.month ?? "0");
+          const target = addMonths(viewMonth, direction);
+          button.disabled =
+            direction < 0
+              ? monthIndex(target) < monthIndex(currentMonth)
+              : monthIndex(target) > monthIndex(currentMonth) + 3;
+        });
+      };
+
+      const renderSlots = (): void => {
+        slotsEl.replaceChildren();
+        selectedSlotEl.textContent = selectedSlot
+          ? `${dayLabel(selectedDay)} · ${selectedSlot.label}`
+          : "";
+
+        if (!selectedDay) {
+          slotsEl.append(emptyState(copy("monthEmpty")));
+          return;
+        }
+
+        if (slotState === "loading") {
+          const paragraph = document.createElement("p");
+          paragraph.className = "slots__empty";
+          paragraph.textContent = copy("loading");
+          slotsEl.append(paragraph);
+          return;
+        }
+
+        if (slotState === "error") {
+          slotsEl.append(emptyState(copy("loadError")));
+          return;
+        }
+
+        if (slots.length === 0) {
+          slotsEl.append(emptyState(copy("noSlots")));
+          return;
+        }
+
+        slots.forEach((slot) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "slot";
+          button.dataset.start = slot.start;
+          button.textContent = slot.label;
+          button.setAttribute(
+            "aria-pressed",
+            String(selectedSlot?.start === slot.start)
+          );
+          slotsEl.append(button);
+        });
+      };
+
+      const renderStatus = (): void => {
+        status.dataset.state = statusState;
+        status.textContent = statusKey ? copy(statusKey) : "";
+      };
+
+      const setStatus = (
+        key: string | null,
+        state: "idle" | "success" | "error"
+      ): void => {
+        statusKey = key;
+        statusState = state;
+        renderStatus();
+      };
+
+      const updateSubmit = (): void => {
+        if (!submit) return;
+        submit.disabled = busy || !selectedSlot;
+        if (!submitText) return;
+        if (busy) {
+          submitText.textContent = copy("sending");
+        } else {
+          submitText.textContent = copy(endpoint ? "submitLive" : "submit");
+        }
+      };
+
+      const setFormOpen = (open: boolean): void => {
+        form.hidden = !open;
+        updateSubmit();
+      };
+
+      const updateDay = (): void => {
+        selectedDayEl.textContent = selectedDay ? dayLabel(selectedDay) : "—";
+      };
+
+      const loadSlots = async (key: string): Promise<void> => {
+        selectedSlot = null;
+        setFormOpen(false);
+        const token = (loadToken += 1);
+
+        if (!key) {
+          slots = [];
+          slotState = "ready";
+          renderSlots();
+          return;
+        }
+
+        if (!endpoint) {
+          slots = fallbackSlots(key);
+          slotState = "ready";
+          renderSlots();
+          return;
+        }
+
+        slots = [];
+        slotState = "loading";
+        renderSlots();
+
+        try {
+          const url = new URL(endpoint, window.location.origin);
+          url.searchParams.set("action", "availability");
+          url.searchParams.set("date", key);
+
+          const response = await fetch(url.toString(), {
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          });
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data: unknown = await response.json();
+
+          if (token !== loadToken) return;
+
+          if (
+            !data ||
+            typeof data !== "object" ||
+            (data as { ok?: unknown }).ok !== true
+          ) {
+            throw new Error("Invalid availability response");
+          }
+
+          const list = (data as { slots?: unknown }).slots;
+
+          if (!Array.isArray(list)) throw new Error("Missing slots");
+
+          slots = list
+            .filter(
+              (item): item is Slot =>
+                typeof item === "object" &&
+                item !== null &&
+                typeof (item as Slot).start === "string"
+            )
+            .map((item) => ({
+              start: item.start,
+              label:
+                typeof item.label === "string" && item.label
+                  ? item.label
+                  : slotLabel(item.start),
+            }));
+
+          slotState = "ready";
+          renderSlots();
+        } catch {
+          if (token !== loadToken) return;
+          slots = [];
+          slotState = "error";
+          renderSlots();
+        }
+      };
+
+      const loadMonth = async (month: Date): Promise<void> => {
+        const token = (monthToken += 1);
+        const key = monthKeyOf(month);
+        counts = new Map();
+        renderCalendar();
+
+        if (!endpoint) {
+          const totalDays = new Date(
+            Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 0)
+          ).getUTCDate();
+
+          for (let day = 1; day <= totalDays; day += 1) {
+            const dateKey = `${key}-${pad(day)}`;
+            const available = fallbackSlots(dateKey).length;
+            if (available > 0) counts.set(dateKey, available);
+          }
+
+          renderCalendar();
+          pickFirstDay();
+          return;
+        }
+
+        try {
+          const url = new URL(endpoint, window.location.origin);
+          url.searchParams.set("action", "month");
+          url.searchParams.set("month", key);
+
+          const response = await fetch(url.toString(), {
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          });
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data: unknown = await response.json();
+
+          if (token !== monthToken) return;
+
+          const list =
+            data && typeof data === "object"
+              ? (data as { days?: unknown }).days
+              : null;
+
+          if (!Array.isArray(list)) throw new Error("Invalid month response");
+
+          counts = new Map(
+            list
+              .filter(
+                (item): item is { date: string; count: number } =>
+                  typeof item === "object" &&
+                  item !== null &&
+                  typeof (item as { date?: unknown }).date === "string"
+              )
+              .map((item) => [item.date, Number(item.count) || 0])
+          );
+
+          if (
+            counts.size === 0 &&
+            autoSkip &&
+            monthIndex(viewMonth) < monthIndex(currentMonth) + 3
+          ) {
+            viewMonth = addMonths(viewMonth, 1);
+            void loadMonth(viewMonth);
+            return;
+          }
+
+          renderCalendar();
+          pickFirstDay();
+        } catch {
+          if (token !== monthToken) return;
+          counts = new Map();
+          renderCalendar();
+          selectedDay = "";
+          updateDay();
+          renderSlots();
+        }
+      };
+
+      const pickFirstDay = (): void => {
+        const monthKey = monthKeyOf(viewMonth);
+        const stillOpen =
+          selectedDay.startsWith(monthKey) && (counts.get(selectedDay) ?? 0) > 0;
+
+        if (stillOpen) {
+          renderCalendar();
+          return;
+        }
+
+        const first = [...counts.keys()].sort()[0] ?? "";
+        selectedDay = first;
+        updateDay();
+        renderCalendar();
+        void loadSlots(first);
+      };
+
+      const goToMonth = (amount: number): void => {
+        autoSkip = false;
+        viewMonth = addMonths(viewMonth, amount);
+        selectedSlot = null;
+        setFormOpen(false);
+        setStatus(null, "idle");
+        void loadMonth(viewMonth);
+      };
+
+      const paintDone = (booking: Booking): void => {
+        const pending = booking.status === "pending";
+
+        if (doneTitle) {
+          doneTitle.textContent = copy(
+            pending ? "doneTitlePending" : "doneTitle"
+          );
+        }
+
+        if (doneWhen)
+          doneWhen.textContent = `${booking.dayLabel} · ${booking.label}`;
+
+        if (doneWhere) {
+          doneWhere.textContent = copy(
+            pending ? "doneWherePending" : "doneWhere"
+          );
+        }
+
+        if (doneNote) {
+          doneNote.textContent = copy(pending ? "doneNotePending" : "doneNote");
+        }
+
+        if (doneMeet) {
+          doneMeet.hidden = pending || !booking.meetLink;
+          if (booking.meetLink) doneMeet.href = booking.meetLink;
+        }
+
+        if (doneCalendar) {
+          doneCalendar.hidden = pending || !booking.calendarLink;
+          if (booking.calendarLink) doneCalendar.href = booking.calendarLink;
+        }
+      };
+
+      const showDone = (booking: Booking): void => {
+        paintDone(booking);
+        picker.hidden = true;
+        done.hidden = false;
+        done.setAttribute("tabindex", "-1");
+        done.focus({ preventScroll: true });
+      };
+
+      const updateSelectedSlot = (): void => {
+        slotsEl
+          .querySelectorAll<HTMLButtonElement>(".slot")
+          .forEach((button) => {
+            button.setAttribute(
+              "aria-pressed",
+              String(selectedSlot?.start === button.dataset.start)
+            );
+          });
+
+        selectedSlotEl.textContent = selectedSlot
+          ? `${dayLabel(selectedDay)} · ${selectedSlot.label}`
+          : "";
+      };
+
+      renderWeekdays();
+      updateDay();
+      renderStatus();
+      void loadMonth(viewMonth);
+
+      calendarEl.addEventListener("click", (event) => {
+        const target = event.target as Element | null;
+        const button = target?.closest<HTMLButtonElement>(".calendar__day");
+        const key = button?.dataset.day;
+
+        if (!button || button.disabled || !key || key === selectedDay) return;
+
+        selectedDay = key;
+        renderCalendar();
+        updateDay();
+        setStatus(null, "idle");
+        void loadSlots(key);
+      });
+
+      slotsEl.addEventListener("click", (event) => {
+        const target = event.target as Element | null;
+        const button = target?.closest<HTMLButtonElement>(".slot");
+        const start = button?.dataset.start;
+        if (!start) return;
+
+        const slot = slots.find((item) => item.start === start);
+        if (!slot) return;
+
+        selectedSlot = selectedSlot?.start === start ? null : slot;
+        updateSelectedSlot();
+        setStatus(null, "idle");
+        setFormOpen(selectedSlot !== null);
+
+        if (selectedSlot && nameField) {
+          requestAnimationFrame(() => nameField.focus());
+        }
+      });
+
+      scheduler
+        .querySelectorAll<HTMLButtonElement>("[data-month]")
+        .forEach((button) => {
+          button.addEventListener("click", () => {
+            const direction = Number(button.dataset.month ?? "0");
+            if (direction === 0) return;
+            goToMonth(direction);
+          });
+        });
+
+      [nameField, emailField].forEach((field) =>
+        field?.addEventListener("input", () =>
+          field.removeAttribute("aria-invalid")
+        )
+      );
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (busy) return;
+
+        if (!selectedSlot) {
+          setStatus("slotRequired", "error");
+          return;
+        }
+
+        const name = nameField?.value.trim() ?? "";
+        const visitorEmail = emailField?.value.trim() ?? "";
+        const note = noteField?.value.trim() ?? "";
+
+        nameField?.removeAttribute("aria-invalid");
+        emailField?.removeAttribute("aria-invalid");
+
+        if (!name || !visitorEmail) {
+          if (!name) nameField?.setAttribute("aria-invalid", "true");
+          if (!visitorEmail) emailField?.setAttribute("aria-invalid", "true");
+          setStatus("required", "error");
+          (!name ? nameField : emailField)?.focus();
+          return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(visitorEmail)) {
+          emailField?.setAttribute("aria-invalid", "true");
+          setStatus("emailInvalid", "error");
+          emailField?.focus();
+          return;
+        }
+
+        const when = `${dayLabel(selectedDay)} · ${selectedSlot.label}`;
+
+        if (!endpoint) {
+          const body = [
+            copy("mailGreeting"),
+            "",
+            `${copy("mailWhen")}: ${when} (Istanbul, GMT+3)`,
+            `${copy("mailName")}: ${name}`,
+            `${copy("mailEmail")}: ${visitorEmail}`,
+            note ? `${copy("mailNote")}: ${note}` : "",
+            "",
+            copy("mailClose"),
+          ]
+            .filter(Boolean)
+            .join("\n");
+
+          const subject = `${copy("mailSubject")} — ${when}`;
+          window.location.href = `mailto:${email}?subject=${encodeURIComponent(
+            subject
+          )}&body=${encodeURIComponent(body)}`;
+
+          setStatus("mailto", "success");
+          return;
+        }
+
+        busy = true;
+        updateSubmit();
+        setStatus("sending", "success");
+
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              action: "book",
+              name,
+              email: visitorEmail,
+              note,
+              start: selectedSlot.start,
+              timezone: TIME_ZONE,
+              lang: lang(),
+            }),
+          });
+
+          const data: unknown = await response.json().catch(() => null);
+
+          if (
+            !data ||
+            typeof data !== "object" ||
+            (data as { ok?: unknown }).ok !== true
+          ) {
+            const reason =
+              data && typeof data === "object"
+                ? (data as { error?: unknown }).error
+                : null;
+
+            if (reason === "slot_taken") {
+              setStatus("taken", "error");
+              await loadSlots(selectedDay);
+              return;
+            }
+            if (reason === "booking_in_progress") {
+              setStatus("checkingBooking", "error");
+              return;
+            }
+
+            throw new Error("Booking rejected");
+          }
+
+          const event = (data as { event?: unknown }).event;
+          const record =
+            event && typeof event === "object"
+              ? (event as Record<string, unknown>)
+              : {};
+
+          showDone({
+            dayLabel: dayLabel(selectedDay),
+            label: selectedSlot.label,
+            start: selectedSlot.start,
+            meetLink:
+              typeof record.meetLink === "string" ? record.meetLink : "",
+            calendarLink:
+              typeof record.htmlLink === "string" ? record.htmlLink : "",
+            status: record.status === "pending" ? "pending" : "confirmed",
+          });
+        } catch {
+          setStatus("error", "error");
+        } finally {
+          busy = false;
+          updateSubmit();
+        }
+      });
+
+      doneReset?.addEventListener("click", () => {
+        done.hidden = true;
+        picker.hidden = false;
+        form.reset();
+        selectedSlot = null;
+        setStatus(null, "idle");
+        viewMonth = new Date(currentMonth);
+        selectedDay = "";
+        autoSkip = true;
+        void loadMonth(viewMonth);
+        renderCalendar();
+        calendarEl
+          .querySelector<HTMLButtonElement>('.calendar__day[aria-pressed="true"]')
+          ?.focus();
+      });
+
+      window.addEventListener("pageshow", (event) => {
+        if (!event.persisted) return;
+        void loadMonth(viewMonth);
+      });
+    }
+  }
+</script>

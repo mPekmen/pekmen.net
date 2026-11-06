@@ -1,0 +1,29 @@
+---
+import { langOf } from "../i18n/locale";
+
+interface Props {
+  en: string;
+  tr: string;
+  de: string;
+  as?: string;
+  class?: string;
+  html?: boolean;
+}
+
+const { en, tr, de, as = "span", class: className, html = false } = Astro.props;
+
+// The locale is resolved on the server, so each page ships exactly one language.
+const lang = langOf(Astro);
+const value = lang === "tr" ? tr : lang === "de" ? de : en;
+
+// Dynamic tag name; Astro accepts a string when it is capitalised.
+const Tag = as as any;
+---
+
+{
+  html ? (
+    <Tag class={className} set:html={value} />
+  ) : (
+    <Tag class={className}>{value}</Tag>
+  )
+}

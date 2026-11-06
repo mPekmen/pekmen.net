@@ -1,0 +1,132 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import L10n from "../../components/L10n.astro";
+import IconArrow from "../../components/IconArrow.astro";
+import SignatureMark from "../../components/SignatureMark.astro";
+import ProjectLinks from "../../components/ProjectLinks.astro";
+import { projects } from "../../data/projects";
+import { imageSrcSet } from "../../data/images";
+import { site } from "../../data/site";
+import { langOf, localePath } from "../../i18n/locale";
+import "../../styles/showcase.css";
+
+const lang = langOf(Astro);
+const total = String(projects.length).padStart(2, "0");
+const years = `${projects.at(-1)?.year}–${projects[0]?.year}`;
+---
+
+<BaseLayout
+  title="Work — Pekmen"
+  titleTr="İşler — Pekmen"
+  titleDe="Arbeiten — Pekmen"
+  description="Selected projects designed and built by Mert Pekmen, including BarBer, boyacı.net and this portfolio."
+  descriptionTr="Mert Pekmen’in tasarlayıp geliştirdiği seçili projeler: BarBer, boyacı.net ve bu portfolyo."
+  descriptionDe="Ausgewählte Projekte, die Mert Pekmen entworfen und entwickelt hat: BarBer, boyacı.net und dieses Portfolio."
+>
+  <section class="index-head">
+    <div class="container">
+      <div class="index-head__bar">
+        <a class="back-link" href={localePath(lang, "/")}>
+          <IconArrow direction="left" />
+          <span>pekmen.net</span>
+        </a>
+        <span class="label label--muted">
+          <L10n en="Work" tr="Projeler" de="Arbeiten" />
+        </span>
+        <span class="label label--muted index-head__count">{total}</span>
+      </div>
+
+      <div class="index-head__grid">
+        <h1 class="index-head__title">
+          <L10n en="Work." tr="Projeler." de="Arbeiten." />
+        </h1>
+
+        <div class="index-head__side">
+          <p class="project-index-intro"><L10n
+            en="Products and websites I designed and built, from booking a salon to running a Discord giveaway."
+            tr="Salon randevusundan Discord çekilişine, tasarlayıp geliştirdiğim ürünler ve web siteleri."
+            de="Produkte und Websites, die ich entworfen und entwickelt habe, vom Salontermin bis zum Discord-Gewinnspiel." /></p>
+          <span class="label label--muted">{total} <L10n en="projects" tr="proje" de="Projekte" /> · {years}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="index-list">
+    <div class="container">
+      <div class="plates">
+        {projects.map((project) => (
+          <article class="plate project-plate">
+            <div class="plate__top">
+              <span class="plate__no">{project.index}</span>
+              {project.domain && <span class="plate__domain">{project.domain}</span>}
+              <span class="plate__rule" aria-hidden="true"></span>
+              <time class="plate__year" datetime={project.year}>{project.year}</time>
+            </div>
+
+            <a class="plate__media" href={localePath(lang, `/projects/${project.slug}/`)} aria-label={project.title}>
+              {project.image && (
+                <img
+                  src={project.image}
+                  srcset={imageSrcSet(project.image)}
+                  sizes="(min-width: 1000px) min(58vw, 840px), 100vw"
+                  alt=""
+                  width="1200"
+                  height="675"
+                  loading={project.index === "01" ? "eager" : "lazy"}
+                  fetchpriority={project.index === "01" ? "high" : undefined}
+                  decoding="async"
+                />
+              )}
+            </a>
+
+            <div class="plate__rail">
+              <div class="project-detail__eyebrow">
+                <span class="label"><L10n {...project.category} /></span>
+                {project.archived && <span class="project-archive"><L10n en="Archived" tr="Arşivde" de="Archiviert" /></span>}
+              </div>
+              <h2><a class="plate__title" href={localePath(lang, `/projects/${project.slug}/`)}>
+                <span class="plate__title-text">{project.title}</span>
+                <span class="plate__title-arrow" aria-hidden="true">
+                  <IconArrow />
+                </span>
+              </a></h2>
+
+              <p class="plate__text">
+                <L10n
+                  en={(project.short ?? project.summary).en}
+                  tr={(project.short ?? project.summary).tr}
+                  de={(project.short ?? project.summary).de}
+                />
+              </p>
+
+              <ul class="plate__tags">
+                {project.tags.map((tag) => (
+                  <li>{tag}</li>
+                ))}
+              </ul>
+
+              <div class="plate__meta">
+                <span class="plate__role">
+                  <L10n en={project.role.en} tr={project.role.tr} de={project.role.de} />
+                </span>
+
+                <ProjectLinks {project} compact />
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="index-foot">
+    <div class="container index-foot__inner">
+      <SignatureMark />
+
+      <div class="index-foot__copy">
+        <a class="text-link" href={`mailto:${site.email}`}>{site.email}</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

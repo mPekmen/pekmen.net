@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pekmen-net",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [
+      { "name": "BOOKING_COORDINATOR", "class_name": "BookingCoordinator" }
+    ]
+  },
+  "migrations": [
+    { "tag": "booking-coordinator-v1", "new_sqlite_classes": ["BookingCoordinator"] }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
