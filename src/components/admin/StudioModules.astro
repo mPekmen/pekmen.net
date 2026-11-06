@@ -61,6 +61,7 @@ const reportTitles = {
           <a class="studio-button" href="?view=inbox" aria-current={!archived ? "page" : undefined}>{l("Inbox", "Gelen kutusu", "Posteingang")}</a>
           <a class="studio-button" href="?view=archive" aria-current={archived ? "page" : undefined}>{l("Archive", "Arşiv", "Archiv")}</a>
         </nav>
+        {messageStatus === "deleted" && <p class="studio-notice studio-notice--good" role="status">{l("Message and its stored replies permanently deleted.", "Mesaj ve kayıtlı yanıtları kalıcı olarak silindi.", "Nachricht und gespeicherte Antworten dauerhaft gelöscht.")}</p>}
         {messageStatus === "updated" && <p class="studio-empty" role="status">{l("Message updated.", "Mesaj güncellendi.", "Nachricht aktualisiert.")}</p>}
         {replyFeedback && <p class:list={["studio-notice", messageStatus === "accepted" ? "studio-notice--good" : "studio-notice--error"]} role="status">{replyFeedback}</p>}
         {(messageStatus === "error" || messageStatus === "missing") && <p class="studio-empty" role="alert">{l("Could not update the message.", "Mesaj güncellenemedi.", "Nachricht konnte nicht aktualisiert werden.")}</p>}
@@ -88,6 +89,26 @@ const reportTitles = {
                   {archived ? l("Move to inbox", "Gelen kutusuna taşı", "In den Posteingang") : l("Archive", "Arşivle", "Archivieren")}
                 </button>
               </form>
+              <details class="studio-editor studio-editor--danger">
+                <summary>{l("Delete permanently", "Kalıcı olarak sil", "Dauerhaft löschen")}</summary>
+                <form class="studio-editor-form" action="/api/admin/messages" method="post">
+                  <input type="hidden" name="csrf" value={csrf} />
+                  <input type="hidden" name="id" value={item.id} />
+                  <input type="hidden" name="view" value={archived ? "archive" : "inbox"} />
+                  <p class="studio-muted">{l(
+                    "This permanently removes the message and its stored replies from Studio. Copies already delivered by email are not affected.",
+                    "Bu işlem mesajı ve kayıtlı yanıtlarını Studio'dan kalıcı olarak siler. E-postayla iletilmiş kopyalar silinmez.",
+                    "Nachricht und gespeicherte Antworten werden dauerhaft aus Studio gelöscht. Bereits versendete E-Mail-Kopien bleiben erhalten."
+                  )}</p>
+                  <label class="studio-checkbox">
+                    <input type="checkbox" name="confirmDelete" value={item.id} required />
+                    {l("I understand this cannot be undone.", "Bu işlemin geri alınamayacağını anlıyorum.", "Ich verstehe, dass dies nicht rückgängig gemacht werden kann.")}
+                  </label>
+                  <div class="studio-editor-actions">
+                    <button type="submit" class="studio-button studio-button--danger" name="action" value="delete">{l("Delete message", "Mesajı sil", "Nachricht löschen")}</button>
+                  </div>
+                </form>
+              </details>
               {replies === null && <p class="studio-muted">{l("Reply history is unavailable.", "Yanıt geçmişi okunamadı.", "Antwortverlauf nicht verfügbar.")}</p>}
               {replies?.filter((reply) => reply.message_id === item.id).map((reply) => (
                 <article class="studio-reply">
@@ -122,7 +143,7 @@ const reportTitles = {
   <section class="studio-card studio-module">
     <header class="studio-section-head"><div>
       <h2>Cloudflare Web Analytics</h2>
-      <p class="studio-muted">{l("Cloudflare-reported visits, in UTC. Visits are not unique people.", "Cloudflare’ın raporladığı ziyaretler, UTC. Ziyaret sayısı tekil kişi sayısı değildir.", "Von Cloudflare gemeldete Besuche, in UTC. Besuche sind keine eindeutigen Personen.")}</p>
+      <p class="studio-muted">{l("Cloudflare-reported visits including today, in UTC. Visits are not unique people.", "Cloudflare’ın raporladığı son günler (bugün dahil), UTC. Ziyaret sayısı tekil kişi sayısı değildir.", "Cloudflare-Besuche einschließlich heute, UTC. Besuche sind keine eindeutigen Personen.")}</p>
     </div></header>
     {analytics?.state === "disconnected" && <p class="studio-empty">{l("Studio reporting needs a server-side Analytics token and site identifiers.", "Studio raporları için sunucu tarafında Analytics belirteci ve site kimlikleri gerekir.", "Studio-Berichte benötigen ein serverseitiges Analytics-Token und Website-Kennungen.")}</p>}
     {analytics?.state === "unavailable" && <p class="studio-empty" role="alert">{l("Analytics data is unavailable for this period.", "Bu dönem için analiz verisi okunamadı.", "Für diesen Zeitraum sind keine Analysedaten verfügbar.")}</p>}
