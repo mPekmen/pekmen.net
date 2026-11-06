@@ -38,8 +38,7 @@ async function query(token: string, account: string, site: string, start: string
       filter: { siteTag: "${site}",
         datetime_geq: "${start}T00:00:00Z", datetime_lt: "${new Date(Date.parse(end + "T00:00:00Z") + 86_400_000).toISOString()}" }
       orderBy: [${group === "daily" ? "date_ASC" : "sum_visits_DESC"}]
-    ) { dimensions { label: ${dimension} } sum { visits } }`).join("
-");
+    ) { dimensions { label: ${dimension} } sum { visits } }`).join("\n");
   try {
     const response = await fetch("https://api.cloudflare.com/client/v4/graphql", {
       method: "POST",
