@@ -8,10 +8,10 @@ const weekdays = Array.from({ length: 7 }, (_, i) =>
   new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" }).format(new Date(Date.UTC(2024, 0, 1 + i)))
 );
 const labels = locale === "de-DE"
-  ? { prev: "Vorheriger Monat", next: "Nächster Monat", today: "Heute", clear: "Löschen", choose: "Datum auswählen" }
+  ? { prev: "Vorheriger Monat", next: "Nächster Monat", today: "Heute", clear: "Löschen", choose: "Datum auswählen", invalid: "Bitte ein gültiges Datum wählen." }
   : locale === "en-US"
-    ? { prev: "Previous month", next: "Next month", today: "Today", clear: "Clear", choose: "Choose date" }
-    : { prev: "Önceki ay", next: "Sonraki ay", today: "Bugün", clear: "Temizle", choose: "Tarih seç" };
+    ? { prev: "Previous month", next: "Next month", today: "Today", clear: "Clear", choose: "Choose date", invalid: "Choose a valid date." }
+    : { prev: "Önceki ay", next: "Sonraki ay", today: "Bugün", clear: "Temizle", choose: "Tarih seç", invalid: "Geçerli bir tarih seçin." };
 
 const iso = (d: Date) => [d.getUTCFullYear(), String(d.getUTCMonth() + 1).padStart(2, "0"), String(d.getUTCDate()).padStart(2, "0")].join("-");
 const parseIso = (s: string): Date | null => {
@@ -28,14 +28,15 @@ const todayIso = (): string => {
 for (const input of document.querySelectorAll<HTMLInputElement>(".studio-body input[type='date']")) {
   if (input.dataset.calendarEnhanced || input.disabled) continue;
   const label = input.closest("label");
-  const host = document.createElement("span");
+  const fieldName = label?.textContent?.trim() || labels.choose;
+  const host = document.createElement("div");
   host.className = "studio-date-control";
-  input.parentNode?.insertBefore(host, input);
-  host.append(input);
+  const field = label ?? input;
+  field.before(host);
+  host.append(field);
   const trigger = document.createElement("button");
   trigger.type = "button";
   trigger.className = "studio-date-trigger";
-  trigger.setAttribute("aria-label", labels.choose);
   trigger.setAttribute("aria-haspopup", "dialog");
   trigger.setAttribute("aria-expanded", "false");
   const caption = document.createElement("span");
@@ -51,7 +52,7 @@ for (const input of document.querySelectorAll<HTMLInputElement>(".studio-body in
   panel.className = "studio-date-popover";
   panel.hidden = true;
   panel.setAttribute("role", "dialog");
-  panel.setAttribute("aria-label", labels.choose);
+  panel.setAttribute("aria-label", fieldName);
   const head = document.createElement("div");
   head.className = "studio-date-head";
   const prev = document.createElement("button");
@@ -63,7 +64,6 @@ for (const input of document.querySelectorAll<HTMLInputElement>(".studio-body in
   head.append(prev, heading, next);
   const grid = document.createElement("div");
   grid.className = "studio-date-grid";
-  grid.setAttribute("role", "grid");
   const foot = document.createElement("div");
   foot.className = "studio-date-foot";
   const goToday = document.createElement("button");
@@ -79,10 +79,21 @@ for (const input of document.querySelectorAll<HTMLInputElement>(".studio-body in
     const parsed = parseIso(value);
     return parsed ? new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(parsed) : labels.choose;
   };
-  const permitted = (date: string) => (!date && !input.required) || ((!input.min || date >= input.min) && (!input.max || date <= input.max));
+  const permitted = (date: string) => date
+    ? (!input.min || date >= input.min) && (!input.max || date <= input.max)
+    : !input.required;
+  const error = document.createElement("span");
+  error.className = "studio-date-error";
+  error.setAttribute("role", "status");
+  host.append(error);
   const sync = () => {
     caption.textContent = format(input.value);
+    trigger.setAttribute("aria-label", `${fieldName}: ${caption.textContent}`);
     trigger.classList.toggle("is-empty", !input.value);
+    const invalid = input.getAttribute("aria-invalid") === "true" || Boolean(error.textContent);
+    trigger.setAttribute("aria-invalid", String(invalid));
+    const description = input.getAttribute("aria-describedby");
+    if (description) trigger.setAttribute("aria-describedby", description);
   };
   const close = (restoreFocus = false) => {
     panel.hidden = true;
@@ -92,6 +103,7 @@ for (const input of document.querySelectorAll<HTMLInputElement>(".studio-body in
   const select = (value: string) => {
     if (!permitted(value)) return;
     input.value = value;
+    error.textContent = "";
     input.dispatchEvent(new Event("input", { bubbles: true }));
     input.dispatchEvent(new Event("change", { bubbles: true }));
     sync(); close(true);
@@ -121,7 +133,7 @@ for (const input of document.querySelectorAll<HTMLInputElement>(".studio-body in
       btn.textContent = String(day);
       btn.setAttribute("aria-label", new Intl.DateTimeFormat(locale, { dateStyle: "full", timeZone: "UTC" }).format(date));
       btn.disabled = !permitted(value);
-      if (value === input.value) btn.setAttribute("aria-selected", "true");
+      btn.setAttribute("aria-pressed", String(value === input.value));
       if (value === todayIso()) btn.classList.add("is-today");
       btn.addEventListener("click", () => select(value));
       grid.append(btn);
@@ -137,18 +149,32 @@ for (const input of document.querySelectorAll<HTMLInputElement>(".studio-body in
   trigger.addEventListener("click", () => {
     if (!panel.hidden) { close(); return; }
     document.querySelectorAll<HTMLElement>(".studio-date-popover").forEach((p) => { p.hidden = true; p.parentElement?.querySelector(".studio-date-trigger")?.setAttribute("aria-expanded", "false"); });
-    view = parseIso(input.value) ?? parseIso(todayIso())!;
+    const initial = input.value || todayIso();
+    const bounded = input.min && initial < input.min ? input.min : input.max && initial > input.max ? input.max : initial;
+    view = parseIso(bounded) ?? parseIso(todayIso())!;
     render(); panel.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
-    const focused = grid.querySelector<HTMLButtonElement>('button[aria-selected="true"]') ?? grid.querySelector<HTMLButtonElement>("button:not(:disabled)");
+    const focused = grid.querySelector<HTMLButtonElement>('button[aria-pressed="true"]:not(:disabled)') ?? grid.querySelector<HTMLButtonElement>("button:not(:disabled)");
     focused?.focus();
   });
-  prev.addEventListener("click", () => { view = new Date(Date.UTC(view.getUTCFullYear(), view.getUTCMonth() - 1, 1)); render(); prev.focus(); });
-  next.addEventListener("click", () => { view = new Date(Date.UTC(view.getUTCFullYear(), view.getUTCMonth() + 1, 1)); render(); next.focus(); });
+  const changeMonth = (offset: number, control: HTMLButtonElement) => {
+    view = new Date(Date.UTC(view.getUTCFullYear(), view.getUTCMonth() + offset, 1));
+    render();
+    (control.disabled ? grid.querySelector<HTMLButtonElement>("button:not(:disabled)") : control)?.focus();
+  };
+  prev.addEventListener("click", () => changeMonth(-1, prev));
+  next.addEventListener("click", () => changeMonth(1, next));
   goToday.addEventListener("click", () => select(todayIso()));
   clear.addEventListener("click", () => select(""));
   panel.addEventListener("keydown", (event) => {
     if (event.key === "Escape") { event.preventDefault(); close(true); }
+    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key];
+    if (step && event.target instanceof HTMLButtonElement && grid.contains(event.target)) {
+      const days = Array.from(grid.querySelectorAll<HTMLButtonElement>("button"));
+      const target = days[days.indexOf(event.target) + step];
+      event.preventDefault();
+      if (target && !target.disabled) target.focus();
+    }
     if (event.key === "Tab") {
       const focusable = Array.from(panel.querySelectorAll<HTMLButtonElement>("button:not([disabled]):not([hidden])"));
       const first = focusable[0], last = focusable[focusable.length - 1];
@@ -160,7 +186,16 @@ for (const input of document.querySelectorAll<HTMLInputElement>(".studio-body in
     if (!panel.hidden && !host.contains(event.target as Node) && !label?.contains(event.target as Node)) close();
   });
   input.addEventListener("change", sync);
+  new MutationObserver(sync).observe(input, { attributes: true, attributeFilter: ["aria-invalid"] });
+  input.addEventListener("invalid", (event) => {
+    event.preventDefault();
+    error.textContent = labels.invalid;
+    sync();
+    const form = input.form;
+    if (!form || form.querySelector(":invalid") === input) trigger.focus();
+  });
   input.tabIndex = -1;
+  input.setAttribute("aria-hidden", "true");
   input.dataset.calendarEnhanced = "true";
   sync();
 }

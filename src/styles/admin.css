@@ -505,7 +505,9 @@
 
 /* Progressive calendar — ISO form input remains the source of truth. */
 .studio-card:has(.studio-date-control) { overflow: visible; }
-.studio-date-control { position: relative; display: block; min-width: 0; }
+.studio-date-control { position: relative; display: grid; align-content: start; gap: 0.3rem; min-width: 0; }
+.studio-date-error { color: #882d22; font-size: 0.8125rem; }
+.studio-date-error:empty { display: none; }
 .studio-date-control input[type="date"][data-calendar-enhanced="true"] {
   position: absolute;
   inset: 0;
@@ -535,6 +537,7 @@
 }
 .studio-date-trigger.is-empty { color: #65776b; }
 .studio-date-trigger:hover { border-color: var(--green-light); }
+.studio-body .studio-date-trigger[aria-invalid="true"] { border-color: #882d22; }
 .studio-date-icon { font-size: 1.2rem; color: var(--green); line-height: 1; }
 .studio-date-popover[hidden] { display: none !important; }
 .studio-date-popover {
@@ -575,11 +578,11 @@
 .studio-body .studio-date-head button:hover:not(:disabled),
 .studio-body .studio-date-grid button:hover:not(:disabled),
 .studio-body .studio-date-foot button:hover:not(:disabled) { background: #e7f0e5; }
-.studio-body .studio-date-grid button[aria-selected="true"] {
+.studio-body .studio-date-grid button[aria-pressed="true"] {
   background: var(--green);
   color: #fff;
 }
-.studio-body .studio-date-grid button.is-today:not([aria-selected="true"]) {
+.studio-body .studio-date-grid button.is-today:not([aria-pressed="true"]) {
   border-color: var(--green);
   color: var(--green-deep);
 }
@@ -591,7 +594,7 @@
 /* The select remains a semantic native control and works with keyboard and screen readers.
    Browsers that implement customizable selects can style their popup too. */
 @supports (appearance: base-select) {
-  .studio-body select:not([multiple]) { appearance: base-select; }
+  .studio-body select:not([multiple]) { appearance: base-select; background-image: none; }
   .studio-body select:not([multiple])::picker-icon { color: var(--green); }
   .studio-body select:not([multiple])::picker(select) {
     appearance: base-select;
@@ -611,6 +614,10 @@
 @media (max-width: 46rem) {
   .studio-date-popover { width: min(21.5rem, calc(100vw - 2.5rem)); }
 }
+@media (max-width: 32rem) {
+  .studio-filters .studio-date-popover { width: min(21.5rem, calc(100vw - 5rem)); padding: 0.75rem; }
+  .studio-body .studio-date-grid button { min-width: 0; }
+}
 
 /* Keep the end-date calendar inside the viewport on wide filter rows. */
-.studio-filters label:nth-child(4) .studio-date-popover { inset-inline-start: auto; inset-inline-end: 0; }
+.studio-filters > :nth-child(4) .studio-date-popover { inset-inline-start: auto; inset-inline-end: 0; }
