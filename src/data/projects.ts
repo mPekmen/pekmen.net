@@ -54,9 +54,9 @@ const projectList: Project[] = [
       de: "Produktdesign & Full-Stack-Entwicklung",
     },
     summary: {
-      en: "A booking platform for barbershops: live queues, 3D Secure payments and a map of 9,000+ salons.",
-      tr: "Berber salonları için randevu platformu: canlı sıra, 3D Secure ödeme ve 9.000'den fazla salonluk harita.",
-      de: "Eine Buchungsplattform für Barbershops: Live-Warteschlange, 3D-Secure-Zahlungen und eine Karte mit über 9.000 Salons.",
+      en: "A booking platform for salons, with a discovery map, live queues and online payments.",
+      tr: "Salon keşif haritası, canlı sıra takibi ve çevrimiçi ödeme sunan bir randevu platformu.",
+      de: "Eine Buchungsplattform für Salons mit Kartensuche, Live-Warteschlange und Online-Zahlung.",
     },
     short: {
       en: "An online booking app for hairdressers, barbers and massage salons.",
@@ -162,9 +162,9 @@ const projectList: Project[] = [
       de: "Design & Entwicklung",
     },
     summary: {
-      en: "A contact site for a painter in Maltepe: services, prices, photos and a phone number on one fast page.",
-      tr: "Maltepe'deki bir boyacı için tanıtım ve iletişim sitesi: hizmetler, fiyatlar, fotoğraflar ve telefon, hızlı bir sayfada.",
-      de: "Eine Präsentations- und Kontaktseite für einen Maler in Maltepe: Leistungen, Preise, Fotos und Telefon auf einer schnellen Seite.",
+      en: "A site for a painter in Maltepe, with services, prices, work photos and contact details.",
+      tr: "Maltepe’deki bir boyacı için hizmetleri, fiyatları, iş fotoğraflarını ve iletişim bilgilerini bir araya getiren site.",
+      de: "Eine Website für einen Maler in Maltepe mit Leistungen, Preisen, Arbeitsfotos und Kontaktdaten.",
     },
     short: {
       en: "A brochure and contact site for a painter in Maltepe.",
@@ -193,26 +193,26 @@ const projectList: Project[] = [
     sections: [
       {
         title: {
-          en: "Opens instantly on a phone",
-          tr: "Telefonda anında açılıyor",
-          de: "Öffnet am Handy sofort",
+          en: "Built for mobile browsing",
+          tr: "Telefonda gezinmeye uygun",
+          de: "Für den Aufruf am Handy gestaltet",
         },
         body: {
-          en: "The page does not make you wait on a phone: the text and photos arrive ready, and the browser only downloads what it needs. Even on a slow connection, prices and the phone number are on screen within seconds.",
-          tr: "Sayfa telefonda açılırken beklemiyor: yazılar ve fotoğraflar hazır geliyor, tarayıcı yalnızca gerekeni indiriyor. Yavaş bağlantıda bile fiyatlar ve telefon numarası birkaç saniyede ekranda oluyor.",
-          de: "Die Seite lässt dich am Handy nicht warten: Texte und Fotos kommen fertig an, der Browser lädt nur, was er braucht. Auch bei langsamer Verbindung stehen Preise und Telefonnummer in wenigen Sekunden da.",
+          en: "The mobile layout puts prices and contact options near the top, with service photos further down the page.",
+          tr: "Mobil yerleşimde fiyatlar ve iletişim seçenekleri üstte, hizmet fotoğrafları ise sayfanın devamında yer alıyor.",
+          de: "In der mobilen Ansicht stehen Preise und Kontaktmöglichkeiten weit oben. Fotos der Arbeiten folgen weiter unten.",
         },
       },
       {
         title: {
-          en: "Found when the neighbourhood searches",
-          tr: "Mahallede aranınca çıkıyor",
-          de: "Wird in der Nachbarschaft gefunden",
+          en: "Clear local search information",
+          tr: "Yerel arama için açık bilgiler",
+          de: "Klare Angaben für die lokale Suche",
         },
         body: {
-          en: "Titles and descriptions use the words someone in Maltepe would actually type. The site appears in search results with the right service and the right address — not with keyword-stuffed copy.",
-          tr: "Başlıklar ve açıklamalar, Maltepe'de boya işi arayan birinin gerçekten yazacağı kelimelerle yazıldı. Site, arama sonuçlarında doğru hizmet ve doğru adresle çıkıyor; kelimeyle doldurulmuş metinlerle değil.",
-          de: "Titel und Beschreibungen nutzen die Wörter, die jemand in Maltepe tatsächlich eingibt. Die Seite erscheint in den Suchergebnissen mit der richtigen Leistung und der richtigen Adresse — nicht mit mit Keywords vollgestopften Texten.",
+          en: "The page title and description name the painting service and its location so visitors can tell whether the business serves their area.",
+          tr: "Sayfa başlığı ve açıklaması, ziyaretçilerin işletmenin kendi bölgelerine hizmet verip vermediğini anlayabilmesi için boya hizmetini ve konumu belirtiyor.",
+          de: "Seitentitel und Beschreibung nennen die Malerleistung und den Ort. So erkennen Besucher, ob der Betrieb in ihrer Gegend arbeitet.",
         },
       },
       {

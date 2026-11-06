@@ -12,7 +12,8 @@ import "../../styles/showcase.css";
 
 const lang = langOf(Astro);
 const total = String(projects.length).padStart(2, "0");
-const years = `${projects.at(-1)?.year}–${projects[0]?.year}`;
+const sortedYears = projects.map((project) => project.year).sort();
+const years = `${sortedYears[0]}–${sortedYears.at(-1)}`;
 ---
 
 <BaseLayout
@@ -64,7 +65,7 @@ const years = `${projects.at(-1)?.year}–${projects[0]?.year}`;
               <time class="plate__year" datetime={project.year}>{project.year}</time>
             </div>
 
-            <a class="plate__media" href={localePath(lang, `/projects/${project.slug}/`)} aria-label={project.title}>
+            <div class="plate__media">
               {project.image && (
                 <img
                   src={project.image}
@@ -78,7 +79,7 @@ const years = `${projects.at(-1)?.year}–${projects[0]?.year}`;
                   decoding="async"
                 />
               )}
-            </a>
+            </div>
 
             <div class="plate__rail">
               <div class="project-detail__eyebrow">
