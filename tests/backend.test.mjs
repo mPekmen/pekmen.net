@@ -608,9 +608,9 @@ test("Studio Analytics includes today and distinguishes GraphQL errors from empt
   const external = mockFetch(t, (url, init) => {
     assert.equal(url.href, "https://api.cloudflare.com/client/v4/graphql");
     const query = JSON.parse(init.body).query;
-    const today = new Date().toISOString().slice(0, 10);
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
     assert.match(query, /datetime_geq:/);
-    assert.ok(query.includes(today));
+    assert.ok(query.includes(`${tomorrow}T00:00:00Z`));
     return Response.json({ errors: [{ message: "bad query" }], data: { viewer: { accounts: [{ daily: [] }] } } });
   });
   assert.equal((await readStudioAnalytics(30)).state, "unavailable");
