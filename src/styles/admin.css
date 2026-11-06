@@ -501,3 +501,112 @@
 @media (prefers-reduced-motion: reduce) {
   .studio-body :is(button, input, select, textarea, a) { transition: none; }
 }
+
+
+/* Progressive calendar — ISO form input remains the source of truth. */
+.studio-date-control { position: relative; display: block; min-width: 0; }
+.studio-date-control input[type="date"][data-calendar-enhanced="true"] {
+  position: absolute;
+  inset: 0;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.studio-body .studio-date-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.65rem 0.85rem;
+  background: #fff;
+  border: 1px solid #cfd8ce;
+  border-radius: 0.65rem;
+  text-align: start;
+  font-size: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+}
+.studio-date-trigger.is-empty { color: #65776b; }
+.studio-date-trigger:hover { border-color: var(--green-light); }
+.studio-date-icon { font-size: 1.2rem; color: var(--green); line-height: 1; }
+.studio-date-popover[hidden] { display: none !important; }
+.studio-date-popover {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 0.45rem);
+  inset-inline-start: 0;
+  width: min(21.5rem, calc(100vw - 2rem));
+  max-height: min(29rem, 75vh);
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid #d2dfd1;
+  border-radius: 0.9rem;
+  background: #fffefa;
+  box-shadow: 0 22px 55px -22px #122b2059;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+.studio-date-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+.studio-date-head strong { font-size: 1rem; font-weight: 650; color: var(--ink); text-transform: capitalize; }
+.studio-body .studio-date-head button,
+.studio-body .studio-date-grid button,
+.studio-body .studio-date-foot button {
+  display: grid;
+  place-items: center;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.studio-body .studio-date-head button { font-size: 1.5rem; }
+.studio-body .studio-date-head button:hover:not(:disabled),
+.studio-body .studio-date-grid button:hover:not(:disabled),
+.studio-body .studio-date-foot button:hover:not(:disabled) { background: #e7f0e5; }
+.studio-body .studio-date-grid button[aria-selected="true"] {
+  background: var(--green);
+  color: #fff;
+}
+.studio-body .studio-date-grid button.is-today:not([aria-selected="true"]) {
+  border-color: var(--green);
+  color: var(--green-deep);
+}
+.studio-body .studio-date-popover button:disabled { opacity: 0.27; cursor: not-allowed; }
+.studio-date-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.2rem; }
+.studio-date-weekday { text-align: center; padding: 0.5rem 0; font-size: 0.72rem; color: var(--ink-soft); text-transform: uppercase; }
+.studio-date-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 0.8rem; padding-top: 0.75rem; border-top: 1px solid var(--line); }
+.studio-body .studio-date-foot button { width: auto; padding-inline: 0.6rem; color: var(--green-deep); }
+/* The select remains a semantic native control and works with keyboard and screen readers.
+   Browsers that implement customizable selects can style their popup too. */
+@supports (appearance: base-select) {
+  .studio-body select:not([multiple]) { appearance: base-select; }
+  .studio-body select:not([multiple])::picker-icon { color: var(--green); }
+  .studio-body select:not([multiple])::picker(select) {
+    appearance: base-select;
+    border: 1px solid #d2dfd1;
+    border-radius: 0.75rem;
+    padding: 0.35rem;
+    background: #fffefa;
+    box-shadow: 0 16px 38px -20px #122b2059;
+  }
+  .studio-body select:not([multiple]) option {
+    padding: 0.65rem 0.8rem;
+    border-radius: 0.4rem;
+  }
+  .studio-body select:not([multiple]) option:hover { background: #e7f0e5; }
+  .studio-body select:not([multiple]) option:checked { background: #dce9dd; color: var(--green-deep); }
+}
+@media (max-width: 46rem) {
+  .studio-date-popover { width: min(21.5rem, calc(100vw - 2.5rem)); }
+}
