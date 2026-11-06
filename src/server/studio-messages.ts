@@ -56,3 +56,11 @@ export async function updateMessage(db: StudioDatabase, id: string, action: Mess
     ? await statement.bind(Date.now(), id).first<{ id: string }>()
     : await statement.bind(id).first<{ id: string }>()) !== null;
 }
+
+
+/** Permanently delete a message. D1 foreign keys cascade to stored replies. */
+export async function deleteMessage(db: StudioDatabase, id: string): Promise<boolean> {
+  const row = await db.prepare("DELETE FROM studio_messages WHERE id = ? RETURNING id")
+    .bind(id).first<{ id: string }>();
+  return row !== null;
+}
