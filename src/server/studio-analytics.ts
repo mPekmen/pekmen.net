@@ -28,12 +28,14 @@ export function readStudioAnalytics(days: 7 | 30): Promise<Report> {
 }
 
 async function query(token: string, account: string, site: string, start: string, end: string, days: number): Promise<Report> {
+  // The site tag uniquely scopes this Web Analytics dataset. Avoid the extra
+  // requestHost filter, which can silently exclude valid RUM beacons.
   // Cloudflare RUM supports datetime bounds and a date aggregation dimension.
   // On HTTP 200 the GraphQL API may still return an errors array.
   const fields = Object.entries(dimensions).map(([group, dimension]) => `
     ${group}: rumPageloadEventsAdaptiveGroups(
       limit: ${group === "daily" ? days : 10}
-      filter: { siteTag: "${site}", requestHost: "pekmen.net",
+      filter: { siteTag: "${site}",
         datetime_geq: "${start}T00:00:00Z", datetime_lt: "${new Date(Date.parse(end + "T00:00:00Z") + 86_400_000).toISOString()}" }
       orderBy: [${group === "daily" ? "date_ASC" : "sum_visits_DESC"}]
     ) { dimensions { label: ${dimension} } sum { visits } }`).join("\n");
@@ -73,6 +75,9 @@ async function query(token: string, account: string, site: string, start: string
         }
       }
       if (parsed.length === rows.length) groups[group] = parsed;
+    }
+    if (Object.keys(groups).length && Object.values(groups).every((rows) => rows?.length === 0)) {
+      console.info("Studio Analytics: query succeeded but returned no RUM groups for the selected site tag and period");
     }
     // [] means a successful query with no matching browser beacons, not a failed API.
     return Object.keys(groups).length ? { state: "ready", days, groups } : { state: "unavailable" };

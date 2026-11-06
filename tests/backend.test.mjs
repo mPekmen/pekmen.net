@@ -591,7 +591,8 @@ test("Studio Analytics reports only Cloudflare-provided visit groups", async (t)
   const external = mockFetch(t, (url, init) => {
     assert.equal(url.href, "https://api.cloudflare.com/client/v4/graphql");
     assert.equal(init.headers.Authorization, "Bearer test-token");
-    assert.match(JSON.parse(init.body).query, /requestHost: "pekmen.net"/);
+    assert.match(JSON.parse(init.body).query, /siteTag: "b{32}"/);
+    assert.doesNotMatch(JSON.parse(init.body).query, /requestHost:/);
     return Response.json({ data: { viewer: { accounts: [{
       daily: [{ dimensions: { label: "2026-10-30" }, sum: { visits: 12 } }], pages: [], devices: null,
     }] } } });
