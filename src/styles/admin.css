@@ -611,3 +611,6 @@
 @media (max-width: 46rem) {
   .studio-date-popover { width: min(21.5rem, calc(100vw - 2.5rem)); }
 }
+
+/* Keep the end-date calendar inside the viewport on wide filter rows. */
+.studio-filters label:nth-child(4) .studio-date-popover { inset-inline-start: auto; inset-inline-end: 0; }
