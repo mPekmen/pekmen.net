@@ -20,6 +20,10 @@
   "migrations": [
     { "tag": "booking-coordinator-v1", "new_sqlite_classes": ["BookingCoordinator"] }
   ],
+  "vars": {
+    "STUDIO_ANALYTICS_ACCOUNT": "ca825f772a4be9170275962cd736ddef",
+    "STUDIO_ANALYTICS_SITE": "d54feb49433d40f48e9c2140275edd1c"
+  },
   "observability": {
     "enabled": true
   }
